@@ -1,0 +1,619 @@
+/* public/style.css (LENGKAP) */
+
+/* =========================== */
+/* 1. Setup & Global      */
+/* =========================== */
+:root {
+  /* Font */
+  --font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  
+  /* Warna */
+  --bg-sidebar: #1e293b;    /* Biru Gelap */
+  --bg-main: #f1f5f9;       /* Abu-abu Sangat Muda */
+  --bg-card: #ffffff;
+  --text-light: #f8fafc;
+  --text-dark: #334155;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  
+  /* Gradien (Sesuai permintaan awal Anda) */
+  --grad-red: linear-gradient(135deg, #FF512F, #DD2476);
+  --grad-blue: linear-gradient(135deg, #4e54c8, #8f94fb);
+  --grad-green: linear-gradient(135deg, #28b485, #7dd56f);
+  --grad-orange: linear-gradient(135deg, #ff7e5f, #feb47b);
+  --grad-gray: linear-gradient(135deg, #868f96, #596164);
+
+  /* Shadow Modern */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  display: flex;
+  background-color: var(--bg-main);
+  color: var(--text-dark);
+}
+
+/* =========================== */
+/* 2. Sidebar         */
+/* =========================== */
+.sidebar {
+  width: 260px;
+  background: var(--bg-sidebar);
+  color: var(--text-light);
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  flex-shrink: 0; /* Mencegah sidebar menyusut */
+}
+
+.sidebar-header {
+  padding: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.sidebar-header h2 {
+  color: white;
+  text-align: center;
+}
+
+.nav-list {
+  list-style: none;
+  padding: 16px;
+}
+.nav-list .menu-header {
+  padding: 24px 16px 8px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #cbd5e1; /* Warna teks menu */
+  transition: all 0.2s ease;
+}
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+.nav-link.active {
+  background-color: var(--grad-blue);
+  color: white;
+  font-weight: 700;
+  box-shadow: var(--shadow-md);
+}
+.nav-icon {
+  font-size: 1.2rem;
+}
+
+/* =========================== */
+/* 3. Konten Utama       */
+/* =========================== */
+.main-content {
+  flex-grow: 1; /* Mengisi sisa ruang */
+  height: 100vh;
+  overflow-y: auto;
+  padding: 24px 32px;
+}
+
+/* Sembunyikan halaman yang tidak aktif */
+.page-content.hidden {
+  display: none;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+.page-header h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+.search-bar input {
+  padding: 10px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  min-width: 250px;
+}
+
+/* =========================== */
+/* 4. Dashboard (Modern)     */
+/* =========================== */
+.card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  padding: 24px;
+  color: var(--text-dark);
+}
+
+/* Card Statistik */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+}
+.stat-cards .card {
+  color: white; /* Teks putih untuk kontras di gradien */
+}
+.stat-cards .card p {
+  margin: 0;
+  opacity: 0.9;
+  font-weight: 500;
+}
+.stat-cards .card h3 {
+  margin: 10px 0 0;
+  font-size: 2.25rem;
+}
+
+/* Terapkan Gradien */
+.card-gradient-red    { background: var(--grad-red); }
+.card-gradient-green  { background: var(--grad-green); }
+.card-gradient-orange { background: var(--grad-orange); }
+.card-gradient-gray   { background: var(--grad-gray); }
+.card-gradient-blue   { background: var(--grad-blue); color: white; }
+
+/* Widget Utama */
+.main-widgets {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-top: 24px;
+}
+.widget-balance h1 {
+  font-size: 3rem;
+  margin: 10px 0;
+}
+
+/* =========================== */
+/* 5. Halaman Kode Kas (BARU) */
+/* =========================== */
+
+/* Layout 2 Kolom (Formulir & Tabel) */
+.content-layout {
+  display: grid;
+  grid-template-columns: 1fr 2fr; /* 1/3 untuk form, 2/3 untuk tabel */
+  gap: 24px;
+}
+
+/* Formulir */
+.form-container h3,
+.table-container h3 {
+  margin-bottom: 20px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+  transition: color 0.3s ease; /* Transisi untuk ubah warna judul */
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+.form-group input[type="text"],
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-group input[type="text"]:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #4e54c8;
+  box-shadow: 0 0 0 2px rgba(78, 84, 200, 0.2);
+}
+.helper-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.form-buttons {
+  margin-top: 24px;
+  display: flex;
+  gap: 10px;
+}
+.btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+.btn-simpan {
+  background-color: #27ae60;
+  color: white;
+}
+.btn-simpan:hover {
+  background-color: #2ecc71;
+}
+.btn-batal {
+  background-color: #7f8c8d;
+  color: white;
+}
+.btn-batal:hover {
+  background-color: #95a5a6;
+}
+
+/* Tabel */
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+.table-container th,
+.table-container td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+.table-container th {
+  background-color: #f8f9fa;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.table-container tr:last-child td {
+  border-bottom: none;
+}
+.table-container tr:hover {
+  background-color: #fdfdfd;
+}
+
+/* Badge (Penambah/Pengurang) */
+.badge {
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: white;
+  text-transform: capitalize;
+}
+.badge-penambah { background-color: #27ae60; }
+.badge-pengurang { background-color: #e74c3c; }
+.badge-pindahan  { background-color: #3498db; }
+
+/* Tombol Aksi di Tabel */
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  margin-right: 8px;
+  padding: 4px;
+  transition: color 0.2s;
+}
+.action-btn.delete { color: #e74c3c; }
+.action-btn.delete:hover { color: #c0392b; }
+.action-btn.edit { color: #3498db; }
+.action-btn.edit:hover { color: #2980b9; }
+
+/* =========================== */
+/* 6. Responsif          */
+/* =========================== */
+@media (max-width: 1200px) {
+  .main-widgets {
+    grid-template-columns: 1fr; /* Tumpuk widget di layar kecil */
+  }
+}
+
+@media (max-width: 992px) {
+  .content-layout {
+    grid-template-columns: 1fr; /* Tumpuk formulir dan tabel */
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    flex-direction: column; /* Tumpuk sidebar dan konten di HP */
+  }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+  }
+  .main-content {
+    height: auto;
+    padding: 16px;
+  }
+  .stat-cards {
+    grid-template-columns: 1fr; /* Tumpuk card statistik */
+  }
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .search-bar {
+    width: 100%;
+  }
+  .search-bar input {
+    width: 100%;
+  }
+}
+
+/* ================================== */
+/* 7. Kode Tambahan Anda (Sudah Rapi) */
+/* ================================== */
+#app-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: white;
+}
+.app-icon {
+  font-size: 2rem;
+  color: #ffb703;
+}
+.badge-operasional { background-color: #f39c12; }
+.badge-investasi   { background-color: #2980b9; }
+.badge-lain-lain   { background-color: #9b59b6; }
+
+/* ================================== */
+/* 8. Notifikasi Toast         */
+/* ================================== */
+.toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  background-color: #27ae60;
+  color: white;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1000;
+  transform: translateX(120%);
+  opacity: 0;
+  transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+}
+.toast.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+.toast.hidden {
+  display: flex;
+  opacity: 0;
+  transform: translateX(120%);
+}
+.toast.error {
+  background-color: #e74c3c;
+}
+.toast #toast-icon {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+.toast p {
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* ================================== */
+/* 9. Styling Mode Edit (BARU)        */
+/* ================================== */
+
+/* Tambahkan highlight di sisi kiri card */
+.form-container.editing {
+  border-left: 5px solid #3498db; /* Biru Edit */
+  transition: border-left 0.3s ease;
+}
+
+/* Ubah warna judul */
+.form-container.editing h3 {
+  color: #3498db;
+}
+
+/* Ubah tombol 'Simpan' menjadi 'Update' (Biru) */
+.form-container.editing .btn-simpan {
+  background-color: #3498db;
+}
+.form-container.editing .btn-simpan:hover {
+  background-color: #2980b9;
+}
+
+/* Buat tombol 'Batal' menjadi lebih jelas (Merah) */
+.form-container.editing .btn-batal {
+  background-color: #e74c3c;
+}
+.form-container.editing .btn-batal:hover {
+  background-color: #c0392b;
+}
+
+/* public/style.css (TAMBAHKAN DI BAWAH) */
+
+/* --- Layout Formulir 1 Kolom --- */
+.content-layout-single {
+  max-width: 700px; /* Buat formulir tidak terlalu lebar */
+  margin: 0 auto;
+}
+
+/* --- Styling Choices.js (Searchable Dropdown) --- */
+
+/* Ganti warna border saat fokus */
+.choices__inner {
+  background-color: white;
+  padding: 7px 12px !important;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  min-height: 48px;
+  font-size: 1rem;
+}
+.is-focused .choices__inner {
+  border-color: #4e54c8;
+  box-shadow: 0 0 0 2px rgba(78, 84, 200, 0.2);
+}
+
+/* Ganti warna dropdown list */
+.choices__list--dropdown {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+}
+
+/* Ganti warna item yang dipilih */
+.choices__list--dropdown .choices__item--selectable.is-highlighted {
+  background-color: #4e54c8;
+}
+
+/* Styling input tanggal dan textarea */
+.form-group input[type="date"],
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-family: var(--font-family);
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-group input[type="date"]:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #4e54c8;
+  box-shadow: 0 0 0 2px rgba(78, 84, 200, 0.2);
+}
+.form-group textarea {
+  resize: vertical; /* Izinkan user resize tinggi */
+}
+
+/* public/style.css (TAMBAHKAN DI BAWAH) */
+
+/* --- Perbaikan Input Total (Number) --- */
+.form-group input[type="number"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-family: var(--font-family);
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-group input[type="number"]:focus {
+  outline: none;
+  border-color: #4e54c8;
+  box-shadow: 0 0 0 2px rgba(78, 84, 200, 0.2);
+}
+
+/* Hapus layout single-column yang tidak dipakai lagi */
+.content-layout-single {
+  /* Kosongkan saja, kita pakai .content-layout */
+}
+
+/* public/style.css (TAMBAHKAN DI BAWAH) */
+
+/* --- Styling Halaman Laporan --- */
+.report-header {
+  align-items: center; /* Sejajarkan judul dan filter */
+}
+
+.filter-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.filter-container label {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.filter-container input[type="date"] {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+}
+.btn-filter {
+  background-color: #3498db;
+  color: white;
+  padding: 9px 15px;
+}
+.btn-filter:hover {
+  background-color: #2980b9;
+}
+
+/* Tabel Laporan */
+.table-container tfoot td {
+  font-weight: bold;
+  border-top: 2px solid var(--text-dark); /* Garis tebal di atas total */
+  padding-top: 15px !important;
+}
+.uang-masuk {
+  color: #27ae60; /* Hijau */
+}
+.uang-keluar {
+  color: #e74c3c; /* Merah */
+}
+
+/* Saldo Awal Row */
+.saldo-awal-row td {
+  font-style: italic;
+  font-weight: bold;
+  background-color: #f8f9fa;
+}
+
+/* public/style.css (TAMBAHKAN DI BAWAH) */
+
+/* --- Tombol Ekspor --- */
+.btn-export {
+  background-color: #1a7f37; /* Warna Excel */
+  color: white;
+  padding: 9px 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-export i {
+  font-size: 1.1em;
+}
+.btn-export:hover {
+  background-color: #15692d;
+}
+
+/* --- Highlight Baris Margin --- */
+#tabel-laporan-margin tbody tr.margin-row {
+  background-color: #e6f2ff; /* Biru muda */
+  font-weight: 500;
+}
+
+/* --- Text Alignment --- */
+.text-right { text-align: right; }
+.text-bold { font-weight: bold; }
+.text-success { color: #27ae60; }
+.text-danger { color: #e74c3c; }
+
+/* Footer Tabel (agar styling Total konsisten) */
+.table-footer-totals td {
+  font-weight: bold;
+  border-top: 2px solid var(--text-dark);
+  padding-top: 15px !important;
+}

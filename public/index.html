@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard SPBU Kolongan</title>
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2 id="app-title">
+        <i class="ri-gas-station-fill app-icon"></i> SPBU Kolongan
+      </h2>
+    </div>
+    <ul class="nav-list">
+      <li class="nav-link active" data-target="dashboard">
+        <span class="nav-icon">📊</span> Dashboard
+      </li>
+      <p class="menu-header">MASTER DATA</p>
+      <li class="nav-link" data-target="input-kode-kas">
+        <span class="nav-icon">🗃️</span> Input Kode Kas
+      </li>
+      <li class="nav-link" data-target="input-kode-biaya">
+        <span class="nav-icon">💸</span> Input Kode Biaya
+      </li>
+      <p class="menu-header">TRANSAKSI</p>
+      <li class="nav-link" data-target="input-kas">
+        <span class="nav-icon">📥</span> Input Kas
+      </li>
+      <li class="nav-link" data-target="input-biaya">
+        <span class="nav-icon">📤</span> Input Biaya
+      </li>
+      <p class="menu-header">LAPORAN</p>
+      <li class="nav-link" data-target="tampil-kas">
+        <span class="nav-icon">📄</span> Tampil Kas
+      </li>
+      <li class="nav-link" data-target="tampil-biaya">
+        <span class="nav-icon">📈</span> Tampil Biaya
+      </li>
+      <li class="nav-link" data-target="buku-margin">
+        <span class="nav-icon">💹</span> Buku Margin 
+      </li>
+    </ul>
+  </div>
+
+  <div class="main-content">
+  
+    <div class="page-content" id="dashboard">
+      <header class="page-header"><h2>Dashboard</h2><div class="search-bar"><input type="text" placeholder="Search here..."></div></header>
+      <div class="stat-cards"><div class="card card-gradient-red"><p>Total Invoices</p><h3 id="total-invoices">0</h3></div><div class="card card-gradient-green"><p>Paid Invoices</p><h3 id="paid-invoices">0</h3></div><div class="card card-gradient-orange"><p>Unpaid Invoices</p><h3 id="unpaid-invoices">0</h3></div><div class="card card-gradient-gray"><p>Total Invoices Sent</p><h3 id="total-sent">0</h3></div></div>
+      <div class="main-widgets"><div class="widget-balance card card-gradient-blue"><h3>Wallet Balance</h3><h1 id="wallet-balance">$0.00</h1><p id="wallet-change">+0.0%</p></div><div class="widget-overview card"><h3>Card's Overview</h3><p>(Data Chart akan ada di sini)</p></div></div>
+    </div> 
+    <div class="page-content hidden" id="input-kode-kas">
+      <header class="page-header"><h2>Input Kode Kas</h2></header>
+      <div class="content-layout"><div class="form-container card"><h3>Formulir Kode Kas</h3><form id="form-kode-kas"><div class="form-group"><label for="kode-kas-kode">Kode Kas</label><input type="text" id="kode-kas-kode" placeholder="Contoh: 1011" required><p class="helper-text">Kode tidak boleh duplikat.</p></div><div class="form-group"><label for="kode-kas-uraian">Uraian</label><input type="text" id="kode-kas-uraian" placeholder="Contoh: Penjualan Pertalite" required></div><div class="form-group"><label for="kode-kas-jenis">Jenis</label><select id="kode-kas-jenis" required><option value="">-- Pilih Jenis --</option><option value="Penambah">Penambah</option><option value="Pengurang">Pengurang</option><option value="Pindahan">Pindahan</option></select></div><div class="form-buttons"><button type="submit" class="btn btn-simpan">Simpan</button><button type="button" class="btn btn-batal">Batal</button></div></form></div><div class="table-container card"><h3>Data Kode Kas Tersimpan</h3><table id="tabel-kode-kas"><thead><tr><th>Kode</th><th>Uraian</th><th>Jenis</th><th>Aksi</th></tr></thead><tbody id="tabel-kode-kas-body"></tbody></table></div></div>
+    </div> 
+    <div class="page-content hidden" id="input-kode-biaya">
+      <header class="page-header"><h2>Input Kode Biaya</h2></header>
+      <div class="content-layout"><div class="form-container card"><h3>Formulir Kode Biaya</h3><form id="form-kode-biaya"><div class="form-group"><label for="kode-biaya-kode">Kode Biaya</label><input type="text" id="kode-biaya-kode" placeholder="Contoh: 5111" required><p class="helper-text">Kode tidak boleh duplikat.</p></div><div class="form-group"><label for="kode-biaya-uraian">Uraian</label><input type="text" id="kode-biaya-uraian" placeholder="Contoh: Gaji Karyawan" required></div><div class="form-group"><label for="kode-biaya-jenis">Jenis</label><select id="kode-biaya-jenis" required><option value="">-- Pilih Jenis --</option><option value="Penambah">Penambah</option><option value="Pengurang">Pengurang</option><option value="Pindahan">Pindahan</option></select></div><div class="form-buttons"><button type="submit" class="btn btn-simpan">Simpan</button><button type="button" class="btn btn-batal">Batal</button></div></form></div><div class="table-container card"><h3>Data Kode Biaya Tersimpan</h3><table id="tabel-kode-biaya"><thead><tr><th>Kode</th><th>Uraian</th><th>Jenis</th><th>Aksi</th></tr></thead><tbody id="tabel-kode-biaya-body"></tbody></table></div></div>
+    </div> 
+    <div class="page-content hidden" id="input-kas">
+      <header class="page-header"><h2>Input Kas</h2></header>
+      <div class="content-layout"><div class="form-container card"><h3 id="form-input-kas-title">Formulir Input Kas</h3><form id="form-input-kas"><div class="form-group"><label for="input-kas-kode">Kode Kas</label><select id="input-kas-kode" required></select></div><div class="form-group"><label for="input-kas-tanggal">Tanggal</label><input type="date" id="input-kas-tanggal" required></div><div class="form-group"><label for="input-kas-total">Total (Rp)</label><input type="number" id="input-kas-total" placeholder="Contoh: 500000" required></div><div class="form-group"><label for="input-kas-keterangan">Keterangan</label><textarea id="input-kas-keterangan" rows="3" placeholder="Tulis keterangan tambahan (jika ada)"></textarea></div><div class="form-buttons"><button type="submit" class="btn btn-simpan">Simpan Transaksi</button><button type="button" class="btn btn-batal">Batal</button></div></form></div><div class="table-container card"><h3>Data Kas Hari Ini</h3><table id="tabel-input-kas"><thead><tr><th>Tanggal</th><th>Kode</th><th>Keterangan</th><th>Total (Rp)</th><th>Aksi</th></tr></thead><tbody id="tabel-input-kas-body"></tbody></table></div></div>
+    </div> 
+    <div class="page-content hidden" id="input-biaya">
+      <header class="page-header"><h2>Input Biaya</h2></header>
+      <div class="content-layout"><div class="form-container card"><h3 id="form-input-biaya-title">Formulir Input Biaya</h3><form id="form-input-biaya"><div class="form-group"><label for="input-biaya-kode">Kode Biaya</label><select id="input-biaya-kode" required></select></div><div class="form-group"><label for="input-biaya-tanggal">Tanggal</label><input type="date" id="input-biaya-tanggal" required></div><div class="form-group"><label for="input-biaya-total">Total (Rp)</label><input type="number" id="input-biaya-total" placeholder="Contoh: 150000" required></div><div class="form-group"><label for="input-biaya-keterangan">Keterangan</label><textarea id="input-biaya-keterangan" rows="3" placeholder="Tulis keterangan tambahan (jika ada)"></textarea></div><div class="form-buttons"><button type="submit" class="btn btn-simpan">Simpan Transaksi</button><button type="button" class="btn btn-batal">Batal</button></div></form></div><div class="table-container card"><h3>Data Biaya Hari Ini</h3><table id="tabel-input-biaya"><thead><tr><th>Tanggal</th><th>Kode</th><th>Keterangan</th><th>Total (Rp)</th><th>Aksi</th></tr></thead><tbody id="tabel-input-biaya-body"></tbody></table></div></div>
+    </div> 
+
+    <div class="page-content hidden" id="tampil-kas">
+      <header class="page-header report-header">
+        <h2>Laporan Kas</h2>
+        <div class="filter-container">
+          <label for="kas-start-date">Dari:</label>
+          <input type="date" id="kas-start-date">
+          <label for="kas-end-date">Sampai:</label>
+          <input type="date" id="kas-end-date">
+          <button id="kas-filter-btn" class="btn btn-filter">Terapkan</button>
+          <button id="kas-export-btn" class="btn btn-export"> <i class="ri-file-excel-2-line"></i> Ekspor</button> 
+        </div>
+      </header>
+      <div class="table-container card">
+        <table id="tabel-laporan-kas">
+          <thead><tr><th>Tanggal</th><th>Kode</th><th>Uraian</th><th>Uang Masuk (Rp)</th><th>Uang Keluar (Rp)</th><th>Sisa Saldo (Rp)</th><th>Keterangan</th></tr></thead>
+          <tbody id="tabel-laporan-kas-body"></tbody>
+          <tfoot id="tabel-laporan-kas-foot"><tr><td colspan="3" style="text-align: right; font-weight: bold;">TOTAL</td><td id="kas-total-masuk" class="uang-masuk">Rp 0</td><td id="kas-total-keluar" class="uang-keluar">- Rp 0</td><td colspan="2"></td></tr></tfoot>
+        </table>
+      </div>
+    </div> 
+
+    <div class="page-content hidden" id="tampil-biaya">
+      <header class="page-header report-header">
+        <h2>Laporan Biaya</h2>
+        <div class="filter-container">
+          <label for="biaya-start-date">Dari:</label>
+          <input type="date" id="biaya-start-date">
+          <label for="biaya-end-date">Sampai:</label>
+          <input type="date" id="biaya-end-date">
+          <button id="biaya-filter-btn" class="btn btn-filter">Terapkan</button>
+           <button id="biaya-export-btn" class="btn btn-export"> <i class="ri-file-excel-2-line"></i> Ekspor</button> 
+        </div>
+      </header>
+      <div class="table-container card">
+        <table id="tabel-laporan-biaya">
+          <thead><tr><th>Tanggal</th><th>Kode</th><th>Uraian</th><th>Uang Masuk (Rp)</th><th>Uang Keluar (Rp)</th><th>Sisa Saldo (Rp)</th><th>Keterangan</th></tr></thead>
+          <tbody id="tabel-laporan-biaya-body"></tbody>
+          <tfoot id="tabel-laporan-biaya-foot"><tr><td colspan="3" style="text-align: right; font-weight: bold;">TOTAL</td><td id="biaya-total-masuk" class="uang-masuk">Rp 0</td><td id="biaya-total-keluar" class="uang-keluar">- Rp 0</td><td colspan="2"></td></tr></tfoot>
+        </table>
+      </div>
+    </div> 
+    
+    <div class="page-content hidden" id="buku-margin">
+      <header class="page-header report-header">
+        <h2>Buku Margin</h2>
+        <div class="filter-container">
+          <label for="margin-start-date">Dari:</label>
+          <input type="date" id="margin-start-date">
+          <label for="margin-end-date">Sampai:</label>
+          <input type="date" id="margin-end-date">
+          <button id="margin-filter-btn" class="btn btn-filter">Tampilkan</button>
+          <button id="margin-export-excel-btn" class="btn btn-export"> <i class="ri-file-excel-2-line"></i> Ekspor</button> 
+        </div>
+      </header>
+      <div class="table-container card">
+         <h3 class="table-title">Rincian & Margin</h3>
+         <table id="tabel-laporan-margin">
+          <thead><tr><th>Tanggal</th><th>Kode</th><th>Uraian</th><th class="text-right">Uang Masuk (Rp)</th><th class="text-right">Uang Keluar (Rp)</th><th class="text-right">Sisa Saldo (Rp)</th><th>Keterangan</th></tr></thead>
+          <tbody id="tabel-laporan-margin-body"><tr><td colspan="7">Pilih rentang tanggal dan klik "Tampilkan".</td></tr></tbody>
+          <tfoot class="table-footer-totals"><tr><td colspan="3" class="text-bold text-right">TOTAL BIAYA & MARGIN PERIODE</td><td id="margin-total-masuk" class="text-bold text-right text-success">Rp 0</td><td id="margin-total-keluar" class="text-bold text-right text-danger">- Rp 0</td><td colspan="2"></td></tr></tfoot>
+        </table>
+      </div>
+    </div> 
+
+  </div> <div id="notification-toast" class="toast hidden">
+    <span id="toast-icon"></span>
+    <p id="toast-message"></p>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
