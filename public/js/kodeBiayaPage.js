@@ -71,9 +71,7 @@ export class KodeBiayaPage {
         const id = deleteButton.getAttribute('data-id');
         // console.log('Tombol Delete KodeBiaya diklik. ID:', id); // Aktifkan jika perlu debug
         if (id && id !== 'null' && id !== 'undefined' && !id.startsWith('invalid-id')) {
-          // ================== EDITAN DI SINI ==================
           this._handleDelete(id, deleteButton);
-          // ====================================================
         }
         else console.error('Tombol Delete KodeBiaya tidak memiliki data-id valid.');
       }
@@ -86,7 +84,8 @@ export class KodeBiayaPage {
   async _loadTable() {
     // console.log("Memulai _loadTable KodeBiaya..."); // Aktifkan jika perlu debug
     try {
-      const data = await this.api.get('/api/kodebiaya');
+      // Tambahkan cache buster untuk memastikan data selalu baru
+      const data = await this.api.get(`/api/kodebiaya?_=${new Date().getTime()}`);
       // Pastikan tableBody masih ada
       if (!this.tableBody) return;
       this.tableBody.innerHTML = '';
@@ -117,8 +116,8 @@ export class KodeBiayaPage {
       <td>${item?.jenis ?? '-'}</td>
       <td>
         <button class="action-btn edit" data-id="${itemId}">✏️</button>
-        <button class.action-btn delete" data-id="${itemId}">🗑️</button>
-      </td>
+        <button class="action-btn delete" data-id="${itemId}">🗑️</button>
+        </td>
     `;
     return row;
   }
@@ -159,9 +158,7 @@ export class KodeBiayaPage {
     }
   }
 
-  // ================== EDITAN DI SINI ==================
   async _handleDelete(id, deleteButtonElement) {
-  // ====================================================
     // console.log(`Memulai _handleDelete KodeBiaya untuk ID: ${id}`); // Aktifkan jika perlu debug
     if (!confirm(`Apakah Anda yakin ingin menghapus kode biaya dengan ID: ${id}?`)) {
         // console.log("Penghapusan KodeBiaya dibatalkan."); // Aktifkan jika perlu debug
@@ -178,16 +175,15 @@ export class KodeBiayaPage {
           this._resetForm();
       }
 
-      // ================== EDITAN DI SINI ==================
-      // Ganti _loadTable() dengan manipulasi DOM
+      // Logika ini (dari sebelumnya) sudah benar:
+      // Hapus baris dari tabel secara manual
       if (deleteButtonElement) {
         deleteButtonElement.closest('tr').remove();
       } else {
-        // Fallback
+        // Fallback jika terjadi error
         console.warn("deleteButtonElement tidak ada, _loadTable() dijalankan sebagai fallback.");
         await this._loadTable();
       }
-      // ====================================================
 
     } catch (error) {
       console.error(`Error di _handleDelete KodeBiaya untuk ID ${id}:`, error);
