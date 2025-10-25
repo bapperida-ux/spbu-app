@@ -608,8 +608,6 @@ body {
 /* --- Text Alignment --- */
 .text-right { text-align: right; }
 .text-bold { font-weight: bold; }
-.text-success { color: #27ae60; }
-.text-danger { color: #e74c3c; }
 
 /* Footer Tabel (agar styling Total konsisten) */
 .table-footer-totals td {
@@ -623,3 +621,6 @@ body {
 .text-danger {
   color: red;
 }
+
+.text-success { color: green; } /* Untuk Uang Masuk */
+.margin-highlight { background-color: #fcf8e3; } /* Kuning muda */

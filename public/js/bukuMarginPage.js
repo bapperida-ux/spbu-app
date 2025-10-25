@@ -13,6 +13,7 @@ export class BukuMarginPage {
     this.tableBody = null;
     this.totalMasukEl = null;
     this.totalKeluarEl = null;
+    this._listenersAttached = false; // Flag listener
   }
 
   init() {
@@ -36,15 +37,50 @@ export class BukuMarginPage {
     this.fetchAndDisplayReport();
   }
 
-  _formatRupiah(number) {
-    if (number === null || number === undefined || isNaN(Number(number))) { return 'Rp 0'; }
-    const isNegative = Number(number) < 0;
-    const formatted = new Intl.NumberFormat('id-ID', {
-      style: 'currency', currency: 'IDR',
-      minimumFractionDigits: 0, maximumFractionDigits: 0
-    }).format(Math.abs(Number(number)));
-    return formatted; // Tampilkan positif
+  // ================== FUNGSI FORMAT DIPERBARUI ==================
+  /**
+   * Formatter Rupiah Serbaguna
+   * @param {number} number - Angka yang akan diformat
+   * @param {'default' | 'saldo' | 'keluar'} [mode='default'] - Mode format
+   */
+  _formatRupiah(number, mode = 'default') {
+    const num = Number(number);
+    
+    // Tentukan tampilan untuk 0
+    if (isNaN(num) || num === 0) {
+      // 'saldo' menampilkan Rp 0, mode lain menampilkan '-'
+      return (mode === 'saldo') ? 'Rp 0' : '-';
+    }
+
+    // Buat formatter
+    const formatter = new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+
+    if (mode === 'saldo') {
+      // SISA SALDO: Bisa positif atau negatif
+      if (num < 0) {
+        const formattedAbs = formatter.format(Math.abs(num)); // Hasil: "Rp 34.466.647"
+        const formattedNegative = formattedAbs.replace('Rp', '-Rp'); // Hasil: "-Rp 34.466.647"
+        return `<span class="text-danger">${formattedNegative}</span>`;
+      }
+      return formatter.format(num); // Positif atau 0
+
+    } else if (mode === 'keluar') {
+      // UANG KELUAR: Selalu merah
+      const formatted = formatter.format(num);
+      return `<span class="text-danger">${formatted}</span>`;
+
+    } else {
+      // UANG MASUK (default): Positif saja, hijau
+      const formatted = formatter.format(num);
+      return `<span class="text-success">${formatted}</span>`; // Asumsi ada .text-success
+    }
   }
+  // ================== AKHIR FUNGSI BARU ==================
 
   _formatTanggal(dateString) {
      try {
@@ -64,7 +100,6 @@ export class BukuMarginPage {
   _setupEventListeners() {
     if (this._listenersAttached) return;
     this.filterBtn.addEventListener('click', () => this.fetchAndDisplayReport());
-    // Pastikan ID tombol ekspor ('margin-export-excel-btn') memanggil fungsi yang benar
     this.exportBtn.addEventListener('click', () => this._handleExportExcel());
     this._listenersAttached = true;
   }
@@ -80,7 +115,7 @@ export class BukuMarginPage {
     }
 
     try {
-      this.tableBody.innerHTML = '<tr><td colspan="7">Memuat data laporan margin...</td></tr>'; // Colspan 7
+      this.tableBody.innerHTML = '<tr><td colspan="7">Memuat data laporan margin...</td></tr>';
 
       const apiUrl = `/api/laporan/margin?startDate=${startDate}&endDate=${endDate}&_=${new Date().getTime()}`;
       console.log("Memanggil API:", apiUrl);
@@ -104,7 +139,7 @@ export class BukuMarginPage {
       saldoAwalRow.innerHTML = `
         <td>${this._formatTanggal(startDate)}</td>
         <td colspan="4" class="text-bold">SALDO AWAL (KAS)</td>
-        <td class="text-right text-bold">${this._formatRupiah(currentSaldo)}</td>
+        <td class="text-right text-bold">${this._formatRupiah(currentSaldo, 'saldo')}</td>
         <td></td>
       `;
       this.tableBody.appendChild(saldoAwalRow);
@@ -113,6 +148,7 @@ export class BukuMarginPage {
           const uangMasuk = parseFloat(item.uangMasuk) || 0;
           const uangKeluar = parseFloat(item.uangKeluar) || 0;
 
+          // Perhitungan saldo sudah benar, currentSaldo akan negatif jika perlu
           currentSaldo += uangMasuk;
           currentSaldo -= uangKeluar;
 
@@ -120,36 +156,51 @@ export class BukuMarginPage {
           totalKeluarPeriode += uangKeluar;
 
           const row = document.createElement('tr');
-          const rowClass = item.isMargin ? 'margin-row' : 'biaya-row';
-          row.className = rowClass;
+          // Highlight baris margin
+          if (item.isMargin) {
+            row.classList.add('margin-highlight');
+          }
 
           row.innerHTML = `
               <td>${this._formatTanggal(item.tanggal)}</td>
               <td>${item.kode || '-'}</td>
               <td>${item.uraian || 'Tidak ada uraian'}</td>
-              <td class="text-right uang-masuk">${uangMasuk > 0 ? this._formatRupiah(uangMasuk) : '-'}</td>
-              <td class="text-right uang-keluar">${uangKeluar > 0 ? this._formatRupiah(uangKeluar) : '-'}</td>
-              <td class="text-right">${this._formatRupiah(currentSaldo)}</td>
+              <td class="text-right">${this._formatRupiah(uangMasuk, 'default')}</td>
+              <td class="text-right">${this._formatRupiah(uangKeluar, 'keluar')}</td>
+              <td class="text-right">${this._formatRupiah(currentSaldo, 'saldo')}</td>
               <td>${item.keterangan || ''}</td>
           `;
           this.tableBody.appendChild(row);
       });
 
-      this.totalMasukEl.innerText = this._formatRupiah(totalMasukPeriode);
-      this.totalKeluarEl.innerText = this._formatRupiah(totalKeluarPeriode); // Tampilkan positif
+      // ================== PERBAIKAN FORMAT TOTAL ==================
+      // Gunakan innerHTML karena fungsi format mengembalikan HTML (dengan <span>)
+      this.totalMasukEl.innerHTML = this._formatRupiah(totalMasukPeriode, 'default');
+      this.totalKeluarEl.innerHTML = this._formatRupiah(totalKeluarPeriode, 'keluar');
+      // ============================================================
       console.log("Render tabel selesai.");
 
-    } catch (error) {
+    // ================== PERBAIKAN SYNTAX ERROR ==================
+    } catch (error) { // <-- Tambahkan '{'
       this.notification.show('Gagal memuat laporan margin', 'error');
       console.error("Error di fetchAndDisplayReport Buku Margin:", error);
-      this.tableBody.innerHTML = `<tr><td colspan="7" style="color:red;">Gagal memuat data: ${error.message}</td></tr>`;
-      // Reset total jika error
-      this.totalMasukEl.innerText = this._formatRupiah(0);
-      this.totalKeluarEl.innerText = this._formatRupiah(0);
-    }
+      // Pastikan this.tableBody ada sebelum diubah
+      if (this.tableBody) {
+        this.tableBody.innerHTML = `<tr><td colspan="7" style="color:red;">Gagal memuat data: ${error.message}</td></tr>`;
+      }
+      
+      // Pastikan elemen total ada sebelum diubah
+      if (this.totalMasukEl) {
+        this.totalMasukEl.innerHTML = this._formatRupiah(0, 'saldo');
+      }
+      if (this.totalKeluarEl) {
+        this.totalKeluarEl.innerHTML = this._formatRupiah(0, 'keluar');
+      }
+    } // <-- Tambahkan '}'
+    // ============================================================
   }
 
-  _handleExportExcel() { // Nama fungsi sesuai listener
+  _handleExportExcel() {
     console.log("Memulai _handleExportExcel Margin...");
     const startDate = this.startDateInput.value;
     const endDate = this.endDateInput.value;
@@ -159,11 +210,9 @@ export class BukuMarginPage {
       console.error("Tanggal filter kosong saat ekspor Margin.");
       return;
     }
-
-    // ===== PERBAIKAN: Gunakan URL relatif =====
+    
     const exportUrl = `/api/export/margin?startDate=${startDate}&endDate=${endDate}`;
-    // =======================================
-
+    
     console.log("Membuka URL Ekspor Margin:", exportUrl);
     window.open(exportUrl, '_blank');
   }

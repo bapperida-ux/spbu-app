@@ -5,7 +5,14 @@ const TransaksiBiaya = require('../models/TransaksiBiaya');
 const KodeKas = require('../models/KodeKas');
 const KodeBiaya = require('../models/KodeBiaya');
 
-// Fungsi getKodeMap (Sudah Benar)
+// Helper untuk mendapatkan end of day (23:59:59)
+function getEndOfDay(dateString) {
+  const dateObj = new Date(dateString);
+  dateObj.setHours(23, 59, 59, 999);
+  return dateObj;
+}
+
+// Fungsi getKodeMap (Tidak Berubah)
 async function getKodeMap(model) {
   try {
     const items = await model.findAll();
@@ -18,28 +25,13 @@ async function getKodeMap(model) {
   }
 }
 
-// ================== PERBAIKAN TIMEZONE DI SEMUA FUNGSI ==================
-
-/**
- * Helper untuk memperbaiki masalah timezone pada endDate.
- * Mengubah '2025-10-25' (jam 00:00:00) menjadi '2025-10-25 23:59:59'.
- */
-function getEndOfDay(dateString) {
-  const dateObj = new Date(dateString);
-  dateObj.setHours(23, 59, 59, 999);
-  return dateObj;
-}
-
-// Fungsi calculateSaldoAwalKas (DIPERBAIKI)
+// Fungsi calculateSaldoAwalKas (Tidak Berubah)
 async function calculateSaldoAwalKas(startDate) {
   let saldo = 0;
   const kodeKasMap = await getKodeMap(KodeKas);
   const kodeBiayaMap = await getKodeMap(KodeBiaya);
-
   try {
-    const kasSebelum = await TransaksiKas.findAll({
-      where: { tanggal: { [Op.lt]: startDate } }
-    });
+    const kasSebelum = await TransaksiKas.findAll({ where: { tanggal: { [Op.lt]: startDate } } });
     kasSebelum.forEach(trxInstance => {
       const trx = trxInstance.toJSON();
       const detailKode = kodeKasMap.get(trx.kodeKas);
@@ -51,10 +43,7 @@ async function calculateSaldoAwalKas(startDate) {
         }
       }
     });
-
-    const biayaSebelum = await TransaksiBiaya.findAll({
-      where: { tanggal: { [Op.lt]: startDate } }
-    });
+    const biayaSebelum = await TransaksiBiaya.findAll({ where: { tanggal: { [Op.lt]: startDate } } });
     biayaSebelum.forEach(trxInstance => {
       const trx = trxInstance.toJSON();
       const detailKode = kodeBiayaMap.get(trx.kodeBiaya);
@@ -73,15 +62,12 @@ async function calculateSaldoAwalKas(startDate) {
   }
 }
 
-// Fungsi calculateSaldoAwalBiaya (DIPERBAIKI)
+// Fungsi calculateSaldoAwalBiaya (Tidak Berubah)
 async function calculateSaldoAwalBiaya(startDate) {
   let saldoBiaya = 0;
   const kodeBiayaMap = await getKodeMap(KodeBiaya);
-
   try {
-    const biayaSebelum = await TransaksiBiaya.findAll({
-      where: { tanggal: { [Op.lt]: startDate } }
-    });
+    const biayaSebelum = await TransaksiBiaya.findAll({ where: { tanggal: { [Op.lt]: startDate } } });
     biayaSebelum.forEach(trxInstance => {
       const trx = trxInstance.toJSON();
       const detailKode = kodeBiayaMap.get(trx.kodeBiaya);
@@ -100,20 +86,16 @@ async function calculateSaldoAwalBiaya(startDate) {
   }
 }
 
-// Fungsi getLaporanKasData (DIPERBAIKI)
+// Fungsi getLaporanKasData (Tidak Berubah, sudah benar dengan EOD)
 async function getLaporanKasData(startDate, endDate) {
   try {
     const kodeKasMap = await getKodeMap(KodeKas);
     const saldoAwal = await calculateSaldoAwalKas(startDate);
-
-    // PERBAIKAN TIMEZONE:
     const endDateObj = getEndOfDay(endDate);
-
     const transactionsKas = await TransaksiKas.findAll({
-      where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDateObj } }, // Gunakan endDateObj
+      where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDateObj } },
       order: [['tanggal', 'ASC'], ['createdAt', 'ASC']]
     });
-
     const processedKas = transactionsKas.map(trxInstance => {
       const trx = trxInstance.toJSON();
       const detailKode = kodeKasMap.get(trx.kodeKas);
@@ -127,7 +109,6 @@ async function getLaporanKasData(startDate, endDate) {
         keterangan: trx.keterangan || ''
       };
     });
-
     return { saldoAwal, transaksi: processedKas };
   } catch (error) {
       console.error("Error generating laporan kas:", error);
@@ -135,20 +116,16 @@ async function getLaporanKasData(startDate, endDate) {
   }
 }
 
-// Fungsi getLaporanBiayaData (DIPERBAIKI)
+// Fungsi getLaporanBiayaData (Tidak Berubah, sudah benar dengan EOD)
 async function getLaporanBiayaData(startDate, endDate) {
   try {
     const kodeBiayaMap = await getKodeMap(KodeBiaya);
     const saldoAwal = await calculateSaldoAwalBiaya(startDate);
-
-    // PERBAIKAN TIMEZONE:
     const endDateObj = getEndOfDay(endDate);
-
     const transactionsBiaya = await TransaksiBiaya.findAll({
-      where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDateObj } }, // Gunakan endDateObj
+      where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDateObj } },
       order: [['tanggal', 'ASC'], ['createdAt', 'ASC']]
     });
-
     const processedBiaya = transactionsBiaya.map(trxInstance => {
       const trx = trxInstance.toJSON();
       const detailKode = kodeBiayaMap.get(trx.kodeBiaya);
@@ -162,7 +139,6 @@ async function getLaporanBiayaData(startDate, endDate) {
         keterangan: trx.keterangan || ''
       };
     });
-
     return { saldoAwal, transaksi: processedBiaya };
   } catch (error) {
     console.error("Error generating laporan biaya:", error);
@@ -178,16 +154,30 @@ async function getLaporanMarginData(startDate, endDate) {
     const kodeBiayaMap = await getKodeMap(KodeBiaya);
     const saldoAwal = await calculateSaldoAwalKas(startDate);
 
-    // PERBAIKAN TIMEZONE:
-    const endDateObj = getEndOfDay(endDate);
+    // ================== PERBAIKAN LOGIKA TANGGAL ==================
+    // 1. Tentukan rentang tanggal untuk Biaya (Gaji, dll)
+    const biayaEndDateObj = getEndOfDay(endDate);
 
-    const transactionsKasAll = await TransaksiKas.findAll({
-      where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDateObj } }, // Gunakan endDateObj
+    // 2. Tentukan rentang tanggal untuk Margin (H+1 s/d H-1)
+    const marginStartDate = new Date(startDate);
+    marginStartDate.setDate(marginStartDate.getDate() + 1); // H+1
+
+    const marginEndDate = new Date(endDate);
+    marginEndDate.setDate(marginEndDate.getDate() - 1); // H-1
+    marginEndDate.setHours(23, 59, 59, 999); // Akhir hari H-1
+    // ============================================================
+
+    // Ambil Biaya sesuai rentang asli
+    const transactionsBiayaAll = await TransaksiBiaya.findAll({
+      where: { tanggal: { [Op.gte]: startDate, [Op.lte]: biayaEndDateObj } },
       order: [['tanggal', 'ASC'], ['createdAt', 'ASC']]
     });
 
-    const transactionsBiayaAll = await TransaksiBiaya.findAll({
-      where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDateObj } }, // Gunakan endDateObj
+    // Ambil Kas (Margin) sesuai rentang H+1 s/d H-1
+    const transactionsKasAll = await TransaksiKas.findAll({
+      where: {
+        tanggal: { [Op.gte]: marginStartDate, [Op.lte]: marginEndDate }
+      },
       order: [['tanggal', 'ASC'], ['createdAt', 'ASC']]
     });
 
@@ -196,16 +186,13 @@ async function getLaporanMarginData(startDate, endDate) {
       const detailKode = kodeBiayaMap.get(trx.kodeBiaya);
       const jenis = detailKode ? detailKode.jenis : 'Lainnya';
       const totalAngka = parseFloat(trx.total) || 0;
-      
       let uangMasuk = 0;
       let uangKeluar = 0;
-      // Logika jenis biaya: Penambah (masuk), Pengurang/Pindahan (keluar)
       if (jenis === 'Penambah') {
         uangMasuk = totalAngka;
       } else {
         uangKeluar = totalAngka;
       }
-
       return {
         tanggal: trx.tanggal,
         kode: trx.kodeBiaya,
@@ -218,6 +205,7 @@ async function getLaporanMarginData(startDate, endDate) {
       };
     });
 
+    // Filter KAS hanya untuk 'margin'
     const processedMargin = transactionsKasAll
       .filter(txInstance => {
         const tx = txInstance.toJSON();
@@ -242,6 +230,7 @@ async function getLaporanMarginData(startDate, endDate) {
 
     const combinedData = [...processedBiaya, ...processedMargin];
 
+    // Urutkan gabungan data berdasarkan tanggal
     combinedData.sort((a, b) => {
       const dateA = new Date(a.tanggal);
       const dateB = new Date(b.tanggal);
