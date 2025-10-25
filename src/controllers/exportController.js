@@ -33,38 +33,39 @@ const centerCellStyle = {
     alignment: { vertical: 'top', horizontal: 'center', wrapText: true }
 };
 
-// ================== PERUBAHAN STYLE ==================
+// ================== PERBAIKAN FORMAT ANGKA ==================
+// Format Angka Universal:
+// Positif: "Rp 1.234" (Warna default)
+// Negatif: "-Rp 1.234" (Warna Merah)
+const rupiahFormat = '"Rp"#,##0;[Red]"-Rp"#,##0';
 
-// Style Rupiah Standar (Untuk Sisa Saldo)
-// Akan otomatis (Rp 123) dan [Merah] jika negatif, sesuai gambar Anda
-const rupiahCellStyle = {
+// Style untuk Sisa Saldo (Warna otomatis: Hitam jika positif, Merah jika negatif)
+const rupiahSaldoStyle = {
     border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } },
     alignment: { vertical: 'top', horizontal: 'right', wrapText: true },
-    numFmt: '"Rp"#,##0;[Red]("Rp"#,##0)' // <-- Format Akuntansi Standar
+    numFmt: rupiahFormat
 };
 
-// Style Rupiah Uang Masuk (Warna Hijau)
-const rupiahMasukCellStyle = {
-    ...rupiahCellStyle, // Warisi semua properti dari rupiahCellStyle
-    font: { color: { argb: 'FF008000' } } // Ganti warna font menjadi Hijau Tua
+// Style untuk Uang Masuk (Selalu HIJAU)
+const rupiahMasukStyle = {
+    ...rupiahSaldoStyle, // Warisi format dan border
+    font: { color: { argb: 'FF008000' } } // Paksa warna HIJAU
 };
 
-// Style Rupiah Uang Keluar (Warna Merah)
-const rupiahKeluarCellStyle = {
-    ...rupiahCellStyle, // Warisi semua properti dari rupiahCellStyle
-    font: { color: { argb: 'FFFF0000' } } // Ganti warna font menjadi Merah
+// Style untuk Uang Keluar (Selalu MERAH)
+const rupiahKeluarStyle = {
+    ...rupiahSaldoStyle, // Warisi format dan border
+    font: { color: { argb: 'FFFF0000' } } // Paksa warna MERAH
 };
 // =======================================================
 
 
-// Helper untuk kalkulasi lebar (disesuaikan dengan format (Rp...) )
+// Helper untuk kalkulasi lebar
 function simpleFormatRupiahForLength(number) {
     if (isNaN(Number(number))) return '';
     const num = Number(number);
-    if (num < 0) {
-      return `(Rp ${Math.abs(num).toLocaleString('id-ID')})`; // Format negatif
-    }
-    return `Rp ${num.toLocaleString('id-ID')}`; // Format positif
+    const prefix = num < 0 ? '-Rp ' : 'Rp ';
+    return `${prefix}${Math.abs(num).toLocaleString('id-ID')}`;
 }
 
 
@@ -106,8 +107,8 @@ exports.exportKasToExcel = async (req, res) => {
     saldoAwalRow.getCell('A').style = dateCellStyle;
     updateColumnWidth(2, 'SALDO AWAL'.length);
     saldoAwalRow.getCell('C').style = { font: { bold: true }, alignment: { vertical:'top', horizontal: 'left' }, border: dataCellStyle.border };
-    // Gunakan style rupiah standar (otomatis merah jika negatif)
-    saldoAwalRow.getCell('F').style = { font: { bold: true }, ...rupiahCellStyle }; 
+    // Gunakan style saldo (otomatis hitam/merah)
+    saldoAwalRow.getCell('F').style = { font: { bold: true }, ...rupiahSaldoStyle }; 
     saldoAwalRow.getCell('B').style = dataCellStyle; saldoAwalRow.getCell('D').style = dataCellStyle; saldoAwalRow.getCell('E').style = dataCellStyle; saldoAwalRow.getCell('G').style = dataCellStyle;
     updateColumnWidth(5, simpleFormatRupiahForLength(saldoAwalNum).length);
 
@@ -123,10 +124,10 @@ exports.exportKasToExcel = async (req, res) => {
       try { tanggalValue = new Date(trx.tanggal); if (isNaN(tanggalValue.getTime())) { tanggalValue = trx.tanggal; } }
       catch(e){ tanggalValue = trx.tanggal; }
 
-      // ================== PERBAIKAN DATA ==================
-      // Masukkan uangKeluar sebagai angka POSITIF
-      const rowData = [ tanggalValue, trx.kode || '', trx.uraian || '', uangMasuk > 0 ? uangMasuk : '', uangKeluar > 0 ? uangKeluar : '', currentSaldo, trx.keterangan || '' ];
-      // ====================================================
+      // ================== PERBAIKAN DATA ROW ==================
+      // Uang Keluar dimasukkan sebagai angka NEGATIF
+      const rowData = [ tanggalValue, trx.kode || '', trx.uraian || '', uangMasuk > 0 ? uangMasuk : '', uangKeluar > 0 ? -uangKeluar : '', currentSaldo, trx.keterangan || '' ];
+      // ========================================================
       const dataRow = worksheet.addRow(rowData);
 
       // Apply styling & Hitung Lebar Kolom
@@ -138,16 +139,16 @@ exports.exportKasToExcel = async (req, res) => {
          if (cell.value !== null && cell.value !== undefined && cell.value !== '') {
              if(colNumber === 1 && typeof cell.value === 'object' && cell.value instanceof Date){
                  cell.style = dateCellStyle;
-                 cellTextLength = 10; // dd/mm/yyyy
+                 cellTextLength = 10;
                  isDate = true;
              } else if (typeof cell.value === 'number') {
                  // ================== PERBAIKAN STYLE WARNA ==================
                  if (colNumber === 4) { // Kolom Uang Masuk
-                     cell.style = rupiahMasukCellStyle; // HIJAU
+                     cell.style = rupiahMasukStyle; // HIJAU
                  } else if (colNumber === 5) { // Kolom Uang Keluar
-                     cell.style = rupiahKeluarCellStyle; // MERAH
+                     cell.style = rupiahKeluarStyle; // MERAH
                  } else if (colNumber === 6) { // Kolom Sisa Saldo
-                     cell.style = rupiahCellStyle; // Standar (Otomatis)
+                     cell.style = rupiahSaldoStyle; // Standar (Otomatis)
                  } else {
                      cell.style = numberCellStyle;
                  }
@@ -171,23 +172,23 @@ exports.exportKasToExcel = async (req, res) => {
 
     // Baris Total Periode
     worksheet.addRow([]);
-    // ================== PERBAIKAN DATA ==================
-    // Masukkan totalKeluarPeriode sebagai angka POSITIF
-    const totalRow = worksheet.addRow(['', '', 'TOTAL PERIODE', totalMasukPeriode, totalKeluarPeriode, '', '']);
-    // ====================================================
+    // ================== PERBAIKAN DATA ROW ==================
+    // Total Keluar dimasukkan sebagai angka NEGATIF
+    const totalRow = worksheet.addRow(['', '', 'TOTAL PERIODE', totalMasukPeriode, -totalKeluarPeriode, '', '']);
+    // ========================================================
     worksheet.mergeCells(`A${totalRow.number}:B${totalRow.number}`);
     totalRow.getCell('A').style = totalStyle; totalRow.getCell('B').style = totalStyle;
     totalRow.getCell('C').value = 'TOTAL PERIODE';
     totalRow.getCell('C').style = { ...totalStyle, alignment: { horizontal: 'right'} };
     
     // ================== PERBAIKAN STYLE WARNA ==================
-    totalRow.getCell('D').style = { ...totalStyle, ...rupiahMasukCellStyle }; // HIJAU
-    totalRow.getCell('E').style = { ...totalStyle, ...rupiahKeluarCellStyle }; // MERAH
+    totalRow.getCell('D').style = { ...totalStyle, ...rupiahMasukStyle }; // HIJAU
+    totalRow.getCell('E').style = { ...totalStyle, ...rupiahKeluarStyle }; // MERAH
     // ===========================================================
 
     totalRow.getCell('F').style = totalStyle; totalRow.getCell('G').style = totalStyle;
     updateColumnWidth(3, simpleFormatRupiahForLength(totalMasukPeriode).length);
-    updateColumnWidth(4, simpleFormatRupiahForLength(totalKeluarPeriode).length);
+    updateColumnWidth(4, simpleFormatRupiahForLength(-totalKeluarPeriode).length);
 
     // Terapkan Auto Width
     columnWidths.forEach((width, index) => {
@@ -233,7 +234,7 @@ exports.exportBiayaToExcel = async (req, res) => {
      saldoAwalRow.getCell('A').style = dateCellStyle;
      updateColWidthBiaya(2, 'SALDO AWAL'.length);
      saldoAwalRow.getCell('C').style = { font: { bold: true }, alignment: { vertical:'top', horizontal: 'left' }, border: dataCellStyle.border };
-     saldoAwalRow.getCell('F').style = { font: { bold: true }, ...rupiahCellStyle };
+     saldoAwalRow.getCell('F').style = { font: { bold: true }, ...rupiahSaldoStyle };
      saldoAwalRow.getCell('B').style = dataCellStyle; saldoAwalRow.getCell('D').style = dataCellStyle; saldoAwalRow.getCell('E').style = dataCellStyle; saldoAwalRow.getCell('G').style = dataCellStyle;
      updateColWidthBiaya(5, simpleFormatRupiahForLength(saldoAwalNum).length);
      
@@ -245,8 +246,8 @@ exports.exportBiayaToExcel = async (req, res) => {
          else { uangKeluar = totalAngka; currentSaldo -= totalAngka; totalKeluarPeriode += totalAngka; }
          let tanggalValue = '-'; try { tanggalValue = new Date(trx.tanggal); if (isNaN(tanggalValue.getTime())) tanggalValue = trx.tanggal; } catch(e){ tanggalValue = trx.tanggal; }
          
-         // Masukkan uangKeluar sebagai angka POSITIF
-         const rowData = [ tanggalValue, trx.kode || '', trx.uraian || '', uangMasuk > 0 ? uangMasuk : '', uangKeluar > 0 ? uangKeluar : '', currentSaldo, trx.keterangan || '' ];
+         // Uang Keluar dimasukkan sebagai angka NEGATIF
+         const rowData = [ tanggalValue, trx.kode || '', trx.uraian || '', uangMasuk > 0 ? uangMasuk : '', uangKeluar > 0 ? -uangKeluar : '', currentSaldo, trx.keterangan || '' ];
          const dataRow = worksheet.addRow(rowData);
          
          dataRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
@@ -254,10 +255,9 @@ exports.exportBiayaToExcel = async (req, res) => {
              if (cell.value !== null && cell.value !== undefined && cell.value !== '') {
                  if(colNumber === 1 && typeof cell.value === 'object' && cell.value instanceof Date){ cell.style = dateCellStyle; cellTextLength = 10; isDate = true; }
                  else if (typeof cell.value === 'number') { 
-                     // Style warna
-                     if (colNumber === 4) { cell.style = rupiahMasukCellStyle; } // HIJAU
-                     else if (colNumber === 5) { cell.style = rupiahKeluarCellStyle; } // MERAH
-                     else if (colNumber === 6) { cell.style = rupiahCellStyle; } // Standar
+                     if (colNumber === 4) { cell.style = rupiahMasukStyle; } // HIJAU
+                     else if (colNumber === 5) { cell.style = rupiahKeluarStyle; } // MERAH
+                     else if (colNumber === 6) { cell.style = rupiahSaldoStyle; } // Standar
                      else { cell.style = numberCellStyle; }
                      cellTextLength = simpleFormatRupiahForLength(cell.value).length; 
                  }
@@ -268,19 +268,18 @@ exports.exportBiayaToExcel = async (req, res) => {
      });
      
      worksheet.addRow([]);
-     // Masukkan totalKeluarPeriode sebagai angka POSITIF
-     const totalRow = worksheet.addRow(['', '', 'TOTAL PERIODE', totalMasukPeriode, totalKeluarPeriode, '', '']);
+     // Total Keluar dimasukkan sebagai angka NEGATIF
+     const totalRow = worksheet.addRow(['', '', 'TOTAL PERIODE', totalMasukPeriode, -totalKeluarPeriode, '', '']);
      worksheet.mergeCells(`A${totalRow.number}:B${totalRow.number}`);
      totalRow.getCell('A').style = totalStyle; totalRow.getCell('B').style = totalStyle;
      totalRow.getCell('C').value = 'TOTAL PERIODE';
      totalRow.getCell('C').style = { ...totalStyle, alignment: { horizontal: 'right'} };
      
-     // Style warna
-     totalRow.getCell('D').style = { ...totalStyle, ...rupiahMasukCellStyle }; // HIJAU
-     totalRow.getCell('E').style = { ...totalStyle, ...rupiahKeluarCellStyle }; // MERAH
+     totalRow.getCell('D').style = { ...totalStyle, ...rupiahMasukStyle }; // HIJAU
+     totalRow.getCell('E').style = { ...totalStyle, ...rupiahKeluarStyle }; // MERAH
      
      totalRow.getCell('F').style = totalStyle; totalRow.getCell('G').style = totalStyle;
-     updateColWidthBiaya(3, simpleFormatRupiahForLength(totalMasukPeriode).length); updateColWidthBiaya(4, simpleFormatRupiahForLength(totalKeluarPeriode).length);
+     updateColWidthBiaya(3, simpleFormatRupiahForLength(totalMasukPeriode).length); updateColWidthBiaya(4, simpleFormatRupiahForLength(-totalKeluarPeriode).length);
      
      columnWidthsBiaya.forEach((width, index) => { const finalWidth = Math.min(width, 60); worksheet.getColumn(index + 1).width = finalWidth; });
      
@@ -319,7 +318,7 @@ exports.exportMarginToExcel = async (req, res) => {
         saldoAwalRow.getCell('A').style = dateCellStyle;
         updateColWidthMargin(2, 'SALDO AWAL (KAS)'.length);
         saldoAwalRow.getCell('C').style = { font: { bold: true }, alignment: { vertical:'top', horizontal: 'left' }, border: dataCellStyle.border };
-        saldoAwalRow.getCell('F').style = { font: { bold: true }, ...rupiahCellStyle };
+        saldoAwalRow.getCell('F').style = { font: { bold: true }, ...rupiahSaldoStyle };
         saldoAwalRow.getCell('B').style = dataCellStyle; saldoAwalRow.getCell('D').style = dataCellStyle; saldoAwalRow.getCell('E').style = dataCellStyle; saldoAwalRow.getCell('G').style = dataCellStyle;
         updateColWidthMargin(5, simpleFormatRupiahForLength(saldoAwalNum).length);
         
@@ -331,8 +330,8 @@ exports.exportMarginToExcel = async (req, res) => {
             totalMasukPeriode += uangMasuk; totalKeluarPeriode += uangKeluar;
             let tanggalValue = '-'; try { tanggalValue = new Date(item.tanggal); if (isNaN(tanggalValue.getTime())) tanggalValue = item.tanggal; } catch(e){ tanggalValue = item.tanggal; }
             
-            // Masukkan uangKeluar sebagai angka POSITIF
-            const rowData = [ tanggalValue, item.kode || '', item.uraian || '', uangMasuk > 0 ? uangMasuk : '', uangKeluar > 0 ? uangKeluar : '', currentSaldo, item.keterangan || '' ];
+            // Uang Keluar dimasukkan sebagai angka NEGATIF
+            const rowData = [ tanggalValue, item.kode || '', item.uraian || '', uangMasuk > 0 ? uangMasuk : '', uangKeluar > 0 ? -uangKeluar : '', currentSaldo, item.keterangan || '' ];
             const dataRow = worksheet.addRow(rowData);
             
             dataRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
@@ -340,10 +339,9 @@ exports.exportMarginToExcel = async (req, res) => {
                  if (cell.value !== null && cell.value !== undefined && cell.value !== '') {
                      if(colNumber === 1 && typeof cell.value === 'object' && cell.value instanceof Date){ cell.style = dateCellStyle; cellTextLength = 10; isDate = true; }
                      else if (typeof cell.value === 'number') { 
-                         // Style warna
-                         if (colNumber === 4) { cell.style = rupiahMasukCellStyle; } // HIJAU
-                         else if (colNumber === 5) { cell.style = rupiahKeluarCellStyle; } // MERAH
-                         else if (colNumber === 6) { cell.style = rupiahCellStyle; } // Standar
+                         if (colNumber === 4) { cell.style = rupiahMasukStyle; } // HIJAU
+                         else if (colNumber === 5) { cell.style = rupiahKeluarStyle; } // MERAH
+                         else if (colNumber === 6) { cell.style = rupiahSaldoStyle; } // Standar
                          else { cell.style = numberCellStyle; }
                          cellTextLength = simpleFormatRupiahForLength(cell.value).length; 
                      }
@@ -351,24 +349,24 @@ exports.exportMarginToExcel = async (req, res) => {
                      if(!isDate) updateColWidthMargin(colIndex, cellTextLength);
                  } else { cell.style = dataCellStyle; }
                  
+                 // Highlight baris Margin
                  if (item.isMargin) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF99' } }; // Kuning Muda
             });
         });
         
         worksheet.addRow([]);
-        // Masukkan totalKeluarPeriode sebagai angka POSITIF
-        const totalRow = worksheet.addRow(['', '', 'TOTAL PERIODE', totalMasukPeriode, totalKeluarPeriode, '', '']);
+        // Total Keluar dimasukkan sebagai angka NEGATIF
+        const totalRow = worksheet.addRow(['', '', 'TOTAL PERIODE', totalMasukPeriode, -totalKeluarPeriode, '', '']);
         worksheet.mergeCells(`A${totalRow.number}:B${totalRow.number}`);
         totalRow.getCell('A').style = totalStyle; totalRow.getCell('B').style = totalStyle;
         totalRow.getCell('C').value = 'TOTAL PERIODE';
         totalRow.getCell('C').style = { ...totalStyle, alignment: { horizontal: 'right'} };
         
-        // Style warna
-        totalRow.getCell('D').style = { ...totalStyle, ...rupiahMasukCellStyle }; // HIJAU
-        totalRow.getCell('E').style = { ...totalStyle, ...rupiahKeluarCellStyle }; // MERAH
+        totalRow.getCell('D').style = { ...totalStyle, ...rupiahMasukStyle }; // HIJAU
+        totalRow.getCell('E').style = { ...totalStyle, ...rupiahKeluarStyle }; // MERAH
         
         totalRow.getCell('F').style = totalStyle; totalRow.getCell('G').style = totalStyle;
-        updateColWidthMargin(3, simpleFormatRupiahForLength(totalMasukPeriode).length); updateColWidthMargin(4, simpleFormatRupiahForLength(totalKeluarPeriode).length);
+        updateColWidthMargin(3, simpleFormatRupiahForLength(totalMasukPeriode).length); updateColWidthMargin(4, simpleFormatRupiahForLength(-totalKeluarPeriode).length);
         
         columnWidthsMargin.forEach((width, index) => { const finalWidth = Math.min(width, 60); worksheet.getColumn(index + 1).width = finalWidth; });
         
