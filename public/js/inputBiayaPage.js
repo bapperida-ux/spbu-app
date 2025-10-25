@@ -247,18 +247,25 @@ export class InputBiayaPage {
     if (this.simpanBtn) this.simpanBtn.innerText = 'Simpan';
     if (this.formTitle) this.formTitle.innerText = 'Formulir Input Biaya';
     this._setDefaultTanggal();
+    
+    // ================== PERBAIKAN DI SINI ==================
     if(this.choicesInstance) {
          try {
-            this.choicesInstance.clearStore();
-            this.choicesInstance.setChoices([{ value: '', label: 'Pilih Kode Biaya...', selected: true, disabled: true }], 'value', 'label', true);
+            // Mengatur pilihan kembali ke placeholder (value: '')
+            this.choicesInstance.setChoiceByValue('');
+            // Membersihkan teks yang diketik di pencarian
             this.choicesInstance.clearInput();
         } catch (e) {
             console.error("Gagal mereset Choices.js (Biaya):", e);
+            // Fallback jika error
             if (this.kodeBiayaSelect) this.kodeBiayaSelect.value = '';
         }
     } else if (this.kodeBiayaSelect) {
+        // Fallback jika instance tidak ada
         this.kodeBiayaSelect.value = '';
     }
+    // =======================================================
+
     const formContainer = this.form ? this.form.closest('.form-container') : null;
     if (formContainer) formContainer.classList.remove('editing');
   }
