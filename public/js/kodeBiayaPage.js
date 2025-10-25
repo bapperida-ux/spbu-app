@@ -70,7 +70,11 @@ export class KodeBiayaPage {
       } else if (deleteButton) {
         const id = deleteButton.getAttribute('data-id');
         // console.log('Tombol Delete KodeBiaya diklik. ID:', id); // Aktifkan jika perlu debug
-        if (id && id !== 'null' && id !== 'undefined' && !id.startsWith('invalid-id')) this._handleDelete(id);
+        if (id && id !== 'null' && id !== 'undefined' && !id.startsWith('invalid-id')) {
+          // ================== EDITAN DI SINI ==================
+          this._handleDelete(id, deleteButton);
+          // ====================================================
+        }
         else console.error('Tombol Delete KodeBiaya tidak memiliki data-id valid.');
       }
     });
@@ -106,13 +110,14 @@ export class KodeBiayaPage {
     const itemId = item && item.id ? item.id : `invalid-id-${Math.random()}`;
     if (!item || !item.id) { console.warn("Membuat baris KodeBiaya tanpa ID valid:", item); }
 
+    row.id = `kodebiaya-row-${itemId}`; // Tambahkan ID ke baris
     row.innerHTML = `
       <td>${item?.kode ?? '-'}</td>
       <td>${item?.uraian ?? '-'}</td>
       <td>${item?.jenis ?? '-'}</td>
       <td>
         <button class="action-btn edit" data-id="${itemId}">✏️</button>
-        <button class="action-btn delete" data-id="${itemId}">🗑️</button>
+        <button class.action-btn delete" data-id="${itemId}">🗑️</button>
       </td>
     `;
     return row;
@@ -154,7 +159,9 @@ export class KodeBiayaPage {
     }
   }
 
-  async _handleDelete(id) {
+  // ================== EDITAN DI SINI ==================
+  async _handleDelete(id, deleteButtonElement) {
+  // ====================================================
     // console.log(`Memulai _handleDelete KodeBiaya untuk ID: ${id}`); // Aktifkan jika perlu debug
     if (!confirm(`Apakah Anda yakin ingin menghapus kode biaya dengan ID: ${id}?`)) {
         // console.log("Penghapusan KodeBiaya dibatalkan."); // Aktifkan jika perlu debug
@@ -171,7 +178,17 @@ export class KodeBiayaPage {
           this._resetForm();
       }
 
-      await this._loadTable();
+      // ================== EDITAN DI SINI ==================
+      // Ganti _loadTable() dengan manipulasi DOM
+      if (deleteButtonElement) {
+        deleteButtonElement.closest('tr').remove();
+      } else {
+        // Fallback
+        console.warn("deleteButtonElement tidak ada, _loadTable() dijalankan sebagai fallback.");
+        await this._loadTable();
+      }
+      // ====================================================
+
     } catch (error) {
       console.error(`Error di _handleDelete KodeBiaya untuk ID ${id}:`, error);
       this.notification.show(`Error: ${error.message || 'Gagal menghapus data'}`, 'error');

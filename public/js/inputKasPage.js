@@ -88,7 +88,11 @@ export class InputKasPage {
              else console.error('Tombol Edit InputKas tidak memiliki data-id valid.');
         } else if (deleteButton) {
             const id = deleteButton.getAttribute('data-id');
-            if (id && id !== 'null' && id !== 'undefined' && !id.startsWith('invalid-trx-id')) this._handleDelete(id);
+            if (id && id !== 'null' && id !== 'undefined' && !id.startsWith('invalid-trx-id')) {
+              // ================== EDITAN DI SINI ==================
+              this._handleDelete(id, deleteButton);
+              // ====================================================
+            }
              else console.error('Tombol Delete InputKas tidak memiliki data-id valid.');
         }
     });
@@ -222,6 +226,7 @@ export class InputKasPage {
     const trxId = trx && trx.id ? trx.id : `invalid-trx-id-${Math.random()}`;
     if (!trx || !trx.id) { console.warn("Membuat baris transaksi Kas tanpa ID valid:", trx); }
 
+    row.id = `transaksikas-row-${trxId}`; // Tambahkan ID ke baris
     row.innerHTML = `
       <td>${this._formatTanggal(trx.tanggal)}</td>
       <td>${trx.kodeKas}</td>
@@ -294,7 +299,9 @@ export class InputKasPage {
     }
   }
 
-  async _handleDelete(id) {
+  // ================== EDITAN DI SINI ==================
+  async _handleDelete(id, deleteButtonElement) {
+  // ====================================================
     // console.log(`Memulai _handleDelete InputKas untuk ID: ${id}`); // Aktifkan jika perlu debug
     if (!confirm('Apakah Anda yakin ingin menghapus transaksi kas ini?')) {
         // console.log("Penghapusan TransaksiKas dibatalkan."); // Aktifkan jika perlu debug
@@ -311,7 +318,17 @@ export class InputKasPage {
           this._resetForm();
       }
 
-      await this._loadTable();
+      // ================== EDITAN DI SINI ==================
+      // Ganti _loadTable() dengan manipulasi DOM
+      if (deleteButtonElement) {
+        deleteButtonElement.closest('tr').remove();
+      } else {
+        // Fallback
+        console.warn("deleteButtonElement tidak ada, _loadTable() dijalankan sebagai fallback.");
+        await this._loadTable();
+      }
+      // ====================================================
+
     } catch (error) {
       console.error(`Error di _handleDelete InputKas untuk ID ${id}:`, error);
       this.notification.show(`Error: ${error.message || 'Gagal menghapus transaksi'}`, 'error');

@@ -87,7 +87,11 @@ export class InputBiayaPage {
             else console.error('Tombol Edit InputBiaya tidak memiliki data-id valid.');
         } else if (deleteButton) {
             const id = deleteButton.getAttribute('data-id');
-            if (id && id !== 'null' && id !== 'undefined' && !id.startsWith('invalid-trx-id')) this._handleDelete(id);
+            if (id && id !== 'null' && id !== 'undefined' && !id.startsWith('invalid-trx-id')) {
+              // ================== EDITAN DI SINI ==================
+              this._handleDelete(id, deleteButton);
+              // ====================================================
+            }
              else console.error('Tombol Delete InputBiaya tidak memiliki data-id valid.');
         }
     });
@@ -219,6 +223,7 @@ export class InputBiayaPage {
     const trxId = trx && trx.id ? trx.id : `invalid-trx-id-${Math.random()}`;
     if (!trx || !trx.id) { console.warn("Membuat baris transaksi Biaya tanpa ID valid:", trx); }
 
+    row.id = `transaksibiaya-row-${trxId}`; // Tambahkan ID ke baris
     row.innerHTML = `
       <td>${this._formatTanggal(trx.tanggal)}</td>
       <td>${trx.kodeBiaya}</td>
@@ -283,7 +288,9 @@ export class InputBiayaPage {
     }
   }
 
-  async _handleDelete(id) {
+  // ================== EDITAN DI SINI ==================
+  async _handleDelete(id, deleteButtonElement) {
+  // ====================================================
     // console.log(`Memulai _handleDelete InputBiaya untuk ID: ${id}`); // Aktifkan jika perlu debug
     if (!confirm('Apakah Anda yakin ingin menghapus transaksi biaya ini?')) {
         // console.log("Penghapusan TransaksiBiaya dibatalkan."); // Aktifkan jika perlu debug
@@ -297,7 +304,18 @@ export class InputBiayaPage {
           // console.log(`Transaksi Biaya (${id}) sedang diedit. Mereset form.`); // Aktifkan jika perlu debug
           this._resetForm();
       }
-      await this._loadTable();
+      
+      // ================== EDITAN DI SINI ==================
+      // Ganti _loadTable() dengan manipulasi DOM
+      if (deleteButtonElement) {
+        deleteButtonElement.closest('tr').remove();
+      } else {
+        // Fallback
+        console.warn("deleteButtonElement tidak ada, _loadTable() dijalankan sebagai fallback.");
+        await this._loadTable();
+      }
+      // ====================================================
+
     } catch (error) {
       console.error(`Error di _handleDelete InputBiaya untuk ID ${id}:`, error);
       this.notification.show(`Error: ${error.message || 'Gagal menghapus transaksi'}`, 'error');
