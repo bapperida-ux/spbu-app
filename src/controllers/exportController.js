@@ -28,11 +28,16 @@ const numberCellStyle = { // Style khusus untuk angka biasa (jika ada)
     border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } },
     alignment: { vertical: 'top', horizontal: 'left', wrapText: true }
 };
+
+// ================== EDITAN 1: Mengubah Format Rupiah ==================
 const rupiahCellStyle = { // Style khusus untuk Rupiah
     border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } },
     alignment: { vertical: 'top', horizontal: 'right', wrapText: true },
-    numFmt: '"Rp"#,##0;[Red]"Rp"\\(#,##0\\)'
+    // numFmt: '"Rp"#,##0;[Red]"Rp"\\(#,##0\\)' // <-- FORMAT LAMA
+    numFmt: '"Rp"#,##0;[Red]"-Rp"#,##0' // <-- FORMAT BARU
 };
+// ====================================================================
+
 const centerCellStyle = { // Style khusus untuk tengah
     border: { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } },
     alignment: { vertical: 'top', horizontal: 'center', wrapText: true }
@@ -40,17 +45,20 @@ const centerCellStyle = { // Style khusus untuk tengah
 
 
 // Format Excel (Hanya untuk referensi, format asli ada di style di atas)
-const rupiahFormat = '"Rp"#,##0;[Red]"Rp"\\(#,##0\\)';
+// const rupiahFormat = '"Rp"#,##0;[Red]"Rp"\\(#,##0\\)'; // <-- Format Lama
+const rupiahFormat = '"Rp"#,##0;[Red]"-Rp"#,##0'; // <-- Format Baru
 const dateFormat = 'dd/mm/yyyy';
 
 // Helper sederhana untuk format Rupiah (hanya untuk kalkulasi lebar)
 function simpleFormatRupiahForLength(number) {
     if (isNaN(Number(number))) return '';
-    return `Rp ${Math.abs(Number(number)).toLocaleString('id-ID')}`;
+    const num = Number(number);
+    const prefix = num < 0 ? '-Rp ' : 'Rp ';
+    return `${prefix}${Math.abs(num).toLocaleString('id-ID')}`;
 }
 
 
-// --- Fungsi Ekspor Kas (DIPERBAIKI FORMAT TANGGAL) ---
+// --- Fungsi Ekspor Kas ---
 exports.exportKasToExcel = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
@@ -85,10 +93,8 @@ exports.exportKasToExcel = async (req, res) => {
     const saldoAwalData = [ startDateObj, '', 'SALDO AWAL', '', '', saldoAwalNum, '' ];
     const saldoAwalRow = worksheet.addRow(saldoAwalData);
     worksheet.mergeCells(`C${saldoAwalRow.number}:E${saldoAwalRow.number}`);
-    // ===== PERBAIKAN: Gunakan style tanggal yang sudah ada formatnya =====
     const cellA_Saldo = saldoAwalRow.getCell('A');
     cellA_Saldo.style = dateCellStyle; // Terapkan style tanggal
-    // =================================================================
     updateColumnWidth(2, 'SALDO AWAL'.length);
     saldoAwalRow.getCell('C').style = { font: { bold: true }, alignment: { vertical:'top', horizontal: 'left' }, border: dataCellStyle.border };
     saldoAwalRow.getCell('F').style = { font: { bold: true }, ...rupiahCellStyle }; // Gunakan style rupiah
@@ -107,7 +113,9 @@ exports.exportKasToExcel = async (req, res) => {
       try { tanggalValue = new Date(trx.tanggal); if (isNaN(tanggalValue.getTime())) { tanggalValue = trx.tanggal; } }
       catch(e){ tanggalValue = trx.tanggal; }
 
-      const rowData = [ tanggalValue, trx.kode || '', trx.uraian || '', uangMasuk > 0 ? uangMasuk : '', uangKeluar > 0 ? uangKeluar : '', currentSaldo, trx.keterangan || '' ];
+      // ================== EDITAN 2: Ubah uangKeluar menjadi negatif ==================
+      const rowData = [ tanggalValue, trx.kode || '', trx.uraian || '', uangMasuk > 0 ? uangMasuk : '', uangKeluar > 0 ? -uangKeluar : '', currentSaldo, trx.keterangan || '' ];
+      // ==============================================================================
       const dataRow = worksheet.addRow(rowData);
 
       // Apply styling & Hitung Lebar Kolom
@@ -118,15 +126,15 @@ exports.exportKasToExcel = async (req, res) => {
 
          if (cell.value !== null && cell.value !== undefined && cell.value !== '') {
              if(colNumber === 1 && typeof cell.value === 'object' && cell.value instanceof Date){
-                 // ===== PERBAIKAN: Terapkan dateCellStyle =====
                  cell.style = dateCellStyle;
-                 // ==========================================
                  cellTextLength = 10; // dd/mm/yyyy
                  isDate = true;
              } else if (typeof cell.value === 'number') {
                  if (colNumber >= 4 && colNumber <= 6) { // Kolom Rupiah
-                     cell.style = rupiahCellStyle; // Gunakan style rupiah
-                     if (colNumber === 5 && uangKeluar > 0) cell.font = { color: { argb: 'FFFF0000' } };
+                     cell.style = rupiahCellStyle; // Gunakan style rupiah (otomatis merah jika negatif)
+                     // ================== EDITAN 3: Hapus override warna ==================
+                     // if (colNumber === 5 && uangKeluar > 0) cell.font = { color: { argb: 'FFFF0000' } }; // <-- DIHAPUS
+                     // ==================================================================
                      cellTextLength = simpleFormatRupiahForLength(cell.value).length;
                  } else { // Angka biasa
                      cell.style = numberCellStyle; // Gunakan style angka
@@ -151,16 +159,23 @@ exports.exportKasToExcel = async (req, res) => {
 
     // Baris Total Periode
     worksheet.addRow([]);
-    const totalRow = worksheet.addRow(['', '', 'TOTAL PERIODE', totalMasukPeriode, totalKeluarPeriode, '', '']);
+    // ================== EDITAN 2: Ubah totalKeluarPeriode menjadi negatif ==================
+    const totalRow = worksheet.addRow(['', '', 'TOTAL PERIODE', totalMasukPeriode, -totalKeluarPeriode, '', '']);
+    // ======================================================================================
     worksheet.mergeCells(`A${totalRow.number}:B${totalRow.number}`);
     totalRow.getCell('A').style = totalStyle; totalRow.getCell('B').style = totalStyle;
     totalRow.getCell('C').value = 'TOTAL PERIODE';
     totalRow.getCell('C').style = { ...totalStyle, alignment: { horizontal: 'right'} };
     totalRow.getCell('D').style = { ...totalStyle, ...rupiahCellStyle }; // Gabungkan style total & rupiah
-    totalRow.getCell('E').style = { ...totalStyle, ...rupiahCellStyle, font: { bold: true, color: { argb: 'FFFF0000' } } }; // Total keluar merah
+    
+    // ================== EDITAN 3: Hapus override warna ==================
+    // totalRow.getCell('E').style = { ...totalStyle, ...rupiahCellStyle, font: { bold: true, color: { argb: 'FFFF0000' } } }; // <-- LAMA
+    totalRow.getCell('E').style = { ...totalStyle, ...rupiahCellStyle }; // <-- BARU (Otomatis merah dari numFmt)
+    // ==================================================================
+
     totalRow.getCell('F').style = totalStyle; totalRow.getCell('G').style = totalStyle;
     updateColumnWidth(3, simpleFormatRupiahForLength(totalMasukPeriode).length);
-    updateColumnWidth(4, simpleFormatRupiahForLength(totalKeluarPeriode).length);
+    updateColumnWidth(4, simpleFormatRupiahForLength(-totalKeluarPeriode).length);
 
     // Terapkan Auto Width
     columnWidths.forEach((width, index) => {
@@ -178,24 +193,28 @@ exports.exportKasToExcel = async (req, res) => {
   }
 };
 
-// --- Fungsi Ekspor Biaya (PERLU DIPERBAIKI DENGAN LOGIKA TANGGAL SAMA) ---
+// --- Fungsi Ekspor Biaya (SUDAH DIPERBAIKI) ---
 exports.exportBiayaToExcel = async (req, res) => {
    try {
      const { startDate, endDate } = req.query;
      if (!startDate || !endDate) return res.status(400).send('Parameter startDate dan endDate diperlukan.');
      const { saldoAwal, transaksi } = await getLaporanBiayaData(startDate, endDate);
-     const workbook = new ExcelJS.Workbook(); /* ... setup ... */
+     const workbook = new ExcelJS.Workbook();
+     workbook.creator = 'Aplikasi SPBU'; workbook.lastModifiedBy = 'Aplikasi SPBU'; workbook.created = new Date(); workbook.modified = new Date();
      const worksheet = workbook.addWorksheet('Laporan Biaya');
+     
      // Judul, Tanggal, Header (7 kolom)
-     worksheet.mergeCells('A1:G1'); worksheet.getCell('A1').value = 'Laporan Biaya SPBU Kolongan'; /* Style Title */ worksheet.getCell('A1').font = { size: 16, bold: true }; worksheet.getCell('A1').alignment = { horizontal: 'center' };
+     worksheet.mergeCells('A1:G1'); worksheet.getCell('A1').value = 'Laporan Biaya SPBU Kolongan'; worksheet.getCell('A1').font = { size: 16, bold: true }; worksheet.getCell('A1').alignment = { horizontal: 'center' };
      worksheet.addRow([]);
-     worksheet.mergeCells('A3:G3'); worksheet.getCell('A3').value = `Periode: ${new Date(startDate).toLocaleDateString('id-ID')} - ${new Date(endDate).toLocaleDateString('id-ID')}`; /* Style Date */ worksheet.getCell('A3').font = { italic: true }; worksheet.getCell('A3').alignment = { horizontal: 'center' };
+     worksheet.mergeCells('A3:G3'); worksheet.getCell('A3').value = `Periode: ${new Date(startDate).toLocaleDateString('id-ID')} - ${new Date(endDate).toLocaleDateString('id-ID')}`; worksheet.getCell('A3').font = { italic: true }; worksheet.getCell('A3').alignment = { horizontal: 'center' };
      worksheet.addRow([]);
      const headerRow = worksheet.addRow(['Tanggal', 'Kode', 'Uraian', 'Uang Masuk', 'Uang Keluar', 'Sisa Saldo', 'Keterangan']);
      headerRow.eachCell((cell) => cell.style = headerStyle); headerRow.height = 30;
+     
      // Persiapan Auto Width
      const columnWidthsBiaya = [15, 15, 40, 20, 20, 25, 30];
      const updateColWidthBiaya = (colIndex, textLength) => { if (colIndex === 0) { columnWidthsBiaya[0] = Math.max(columnWidthsBiaya[0], 15); return; } const currentLength = textLength + 2; if (currentLength > columnWidthsBiaya[colIndex]) columnWidthsBiaya[colIndex] = currentLength; };
+     
      // Baris Saldo Awal (Biaya)
      const saldoAwalNum = parseFloat(saldoAwal) || 0;
      let startDateObjBiaya = new Date(startDate); if (isNaN(startDateObjBiaya.getTime())) { startDateObjBiaya = startDate; }
@@ -208,6 +227,7 @@ exports.exportBiayaToExcel = async (req, res) => {
      saldoAwalRow.getCell('F').style = { font: { bold: true }, ...rupiahCellStyle }; // Style rupiah
      saldoAwalRow.getCell('B').style = dataCellStyle; saldoAwalRow.getCell('D').style = dataCellStyle; saldoAwalRow.getCell('E').style = dataCellStyle; saldoAwalRow.getCell('G').style = dataCellStyle;
      updateColWidthBiaya(5, simpleFormatRupiahForLength(saldoAwalNum).length);
+     
      // Loop Data Transaksi Biaya
      let currentSaldo = saldoAwalNum; let totalMasukPeriode = 0; let totalKeluarPeriode = 0;
      transaksi.forEach(trx => {
@@ -216,32 +236,56 @@ exports.exportBiayaToExcel = async (req, res) => {
          if (trx.jenis === 'Penambah') { uangMasuk = totalAngka; currentSaldo += totalAngka; totalMasukPeriode += totalAngka; }
          else { uangKeluar = totalAngka; currentSaldo -= totalAngka; totalKeluarPeriode += totalAngka; }
          let tanggalValue = '-'; try { tanggalValue = new Date(trx.tanggal); if (isNaN(tanggalValue.getTime())) tanggalValue = trx.tanggal; } catch(e){ tanggalValue = trx.tanggal; }
-         const rowData = [ tanggalValue, trx.kode || '', trx.uraian || '', uangMasuk > 0 ? uangMasuk : '', uangKeluar > 0 ? uangKeluar : '', currentSaldo, trx.keterangan || '' ];
+         
+         // ================== EDITAN 2: Ubah uangKeluar menjadi negatif ==================
+         const rowData = [ tanggalValue, trx.kode || '', trx.uraian || '', uangMasuk > 0 ? uangMasuk : '', uangKeluar > 0 ? -uangKeluar : '', currentSaldo, trx.keterangan || '' ];
+         // ==============================================================================
          const dataRow = worksheet.addRow(rowData);
+         
          // Apply styling & Hitung Lebar Kolom (Sama seperti Kas)
          dataRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
              const colIndex = colNumber - 1; let cellTextLength = 0; let isDate = false;
              if (cell.value !== null && cell.value !== undefined && cell.value !== '') {
                  if(colNumber === 1 && typeof cell.value === 'object' && cell.value instanceof Date){ cell.style = dateCellStyle; cellTextLength = 10; isDate = true; } // Terapkan style tanggal
-                 else if (typeof cell.value === 'number') { if (colNumber >= 4 && colNumber <= 6) { cell.style = rupiahCellStyle; if (colNumber === 5 && uangKeluar > 0) cell.font = { color: { argb: 'FFFF0000' } }; cellTextLength = simpleFormatRupiahForLength(cell.value).length; } else { cell.style = numberCellStyle; cellTextLength = cell.value.toString().length; } }
+                 else if (typeof cell.value === 'number') { 
+                     if (colNumber >= 4 && colNumber <= 6) { 
+                         cell.style = rupiahCellStyle; 
+                         // ================== EDITAN 3: Hapus override warna ==================
+                         // if (colNumber === 5 && uangKeluar > 0) cell.font = { color: { argb: 'FFFF0000' } }; // <-- DIHAPUS
+                         // ==================================================================
+                         cellTextLength = simpleFormatRupiahForLength(cell.value).length; 
+                     } else { 
+                         cell.style = numberCellStyle; cellTextLength = cell.value.toString().length; 
+                     } 
+                 }
                  else { cellTextLength = cell.value.toString().length; if (colNumber === 1) cell.style = dataCellStyle; else if (colNumber === 3 || colNumber === 7) cell.style = dataCellStyle; else if (colNumber === 2) cell.style = centerCellStyle; else cell.style = dataCellStyle; }
                  if(!isDate) updateColWidthBiaya(colIndex, cellTextLength);
              } else { cell.style = dataCellStyle; }
          });
      });
+     
      // Baris Total Periode Biaya
      worksheet.addRow([]);
-     const totalRow = worksheet.addRow(['', '', 'TOTAL PERIODE', totalMasukPeriode, totalKeluarPeriode, '', '']);
+     // ================== EDITAN 2: Ubah totalKeluarPeriode menjadi negatif ==================
+     const totalRow = worksheet.addRow(['', '', 'TOTAL PERIODE', totalMasukPeriode, -totalKeluarPeriode, '', '']);
+     // ======================================================================================
      worksheet.mergeCells(`A${totalRow.number}:B${totalRow.number}`);
      totalRow.getCell('A').style = totalStyle; totalRow.getCell('B').style = totalStyle;
      totalRow.getCell('C').value = 'TOTAL PERIODE';
      totalRow.getCell('C').style = { ...totalStyle, alignment: { horizontal: 'right'} };
      totalRow.getCell('D').style = { ...totalStyle, ...rupiahCellStyle };
-     totalRow.getCell('E').style = { ...totalStyle, ...rupiahCellStyle, font: { bold: true, color: { argb: 'FFFF0000' } } };
+     
+     // ================== EDITAN 3: Hapus override warna ==================
+     // totalRow.getCell('E').style = { ...totalStyle, ...rupiahCellStyle, font: { bold: true, color: { argb: 'FFFF0000' } } }; // <-- LAMA
+     totalRow.getCell('E').style = { ...totalStyle, ...rupiahCellStyle }; // <-- BARU
+     // ==================================================================
+     
      totalRow.getCell('F').style = totalStyle; totalRow.getCell('G').style = totalStyle;
-     updateColWidthBiaya(3, simpleFormatRupiahForLength(totalMasukPeriode).length); updateColWidthBiaya(4, simpleFormatRupiahForLength(totalKeluarPeriode).length);
+     updateColWidthBiaya(3, simpleFormatRupiahForLength(totalMasukPeriode).length); updateColWidthBiaya(4, simpleFormatRupiahForLength(-totalKeluarPeriode).length);
+     
      // Terapkan Auto Width Biaya
      columnWidthsBiaya.forEach((width, index) => { const finalWidth = Math.min(width, 60); worksheet.getColumn(index + 1).width = finalWidth; });
+     
      // Send Response
      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
      res.setHeader('Content-Disposition', `attachment; filename="Laporan_Biaya_${startDate}_${endDate}.xlsx"`);
@@ -250,24 +294,28 @@ exports.exportBiayaToExcel = async (req, res) => {
    } catch (error) { console.error('Error exporting Biaya to Excel:', error); res.status(500).send(`Gagal mengekspor laporan Biaya: ${error.message}`); }
 };
 
-// --- Fungsi Ekspor Margin (PERLU DIPERBAIKI DENGAN LOGIKA TANGGAL SAMA) ---
+// --- Fungsi Ekspor Margin (SUDAH DIPERBAIKI) ---
 exports.exportMarginToExcel = async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
         if (!startDate || !endDate) return res.status(400).send('Parameter startDate dan endDate diperlukan.');
         const { saldoAwal, transaksi } = await getLaporanMarginData(startDate, endDate);
-        const workbook = new ExcelJS.Workbook(); /* ... setup ... */
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = 'Aplikasi SPBU'; workbook.lastModifiedBy = 'Aplikasi SPBU'; workbook.created = new Date(); workbook.modified = new Date();
         const worksheet = workbook.addWorksheet('Laporan Margin');
+        
         // Judul, Tanggal, Header (7 kolom)
-        worksheet.mergeCells('A1:G1'); worksheet.getCell('A1').value = 'Laporan Margin SPBU Kolongan'; /* Style Title */ worksheet.getCell('A1').font = { size: 16, bold: true }; worksheet.getCell('A1').alignment = { horizontal: 'center' };
+        worksheet.mergeCells('A1:G1'); worksheet.getCell('A1').value = 'Laporan Margin SPBU Kolongan'; worksheet.getCell('A1').font = { size: 16, bold: true }; worksheet.getCell('A1').alignment = { horizontal: 'center' };
         worksheet.addRow([]);
-        worksheet.mergeCells('A3:G3'); worksheet.getCell('A3').value = `Periode: ${new Date(startDate).toLocaleDateString('id-ID')} - ${new Date(endDate).toLocaleDateString('id-ID')}`; /* Style Date */ worksheet.getCell('A3').font = { italic: true }; worksheet.getCell('A3').alignment = { horizontal: 'center' };
+        worksheet.mergeCells('A3:G3'); worksheet.getCell('A3').value = `Periode: ${new Date(startDate).toLocaleDateString('id-ID')} - ${new Date(endDate).toLocaleDateString('id-ID')}`; worksheet.getCell('A3').font = { italic: true }; worksheet.getCell('A3').alignment = { horizontal: 'center' };
         worksheet.addRow([]);
-        const headerRow = worksheet.addRow(['Tanggal', 'Kode', 'Uraian', 'Uang Masuk', 'Uang Keluar', 'Sisa Saldo (Kas)', 'Keterangan']);
+        const headerRow = worksheet.addRow(['Tanggal', 'Kode', 'Uraian', 'Uang Masuk (Margin)', 'Uang Keluar (Biaya)', 'Sisa Saldo (Kas)', 'Keterangan']);
         headerRow.eachCell((cell) => cell.style = headerStyle); headerRow.height = 30;
+        
         // Persiapan Auto Width
         const columnWidthsMargin = [15, 15, 40, 20, 20, 25, 30];
         const updateColWidthMargin = (colIndex, textLength) => { if (colIndex === 0) { columnWidthsMargin[0] = Math.max(columnWidthsMargin[0], 15); return; } const currentLength = textLength + 2; if (currentLength > columnWidthsMargin[colIndex]) columnWidthsMargin[colIndex] = currentLength; };
+        
         // Baris Saldo Awal (Kas)
         const saldoAwalNum = parseFloat(saldoAwal) || 0;
         let startDateObjMargin = new Date(startDate); if (isNaN(startDateObjMargin.getTime())) { startDateObjMargin = startDate; }
@@ -280,6 +328,7 @@ exports.exportMarginToExcel = async (req, res) => {
         saldoAwalRow.getCell('F').style = { font: { bold: true }, ...rupiahCellStyle }; // Style rupiah
         saldoAwalRow.getCell('B').style = dataCellStyle; saldoAwalRow.getCell('D').style = dataCellStyle; saldoAwalRow.getCell('E').style = dataCellStyle; saldoAwalRow.getCell('G').style = dataCellStyle;
         updateColWidthMargin(5, simpleFormatRupiahForLength(saldoAwalNum).length);
+        
         // Loop Data Transaksi (Margin & Biaya)
         let currentSaldo = saldoAwalNum; let totalMasukPeriode = 0; let totalKeluarPeriode = 0;
         transaksi.forEach(item => {
@@ -288,34 +337,59 @@ exports.exportMarginToExcel = async (req, res) => {
             currentSaldo += uangMasuk; currentSaldo -= uangKeluar;
             totalMasukPeriode += uangMasuk; totalKeluarPeriode += uangKeluar;
             let tanggalValue = '-'; try { tanggalValue = new Date(item.tanggal); if (isNaN(tanggalValue.getTime())) tanggalValue = item.tanggal; } catch(e){ tanggalValue = item.tanggal; }
-            const rowData = [ tanggalValue, item.kode || '', item.uraian || '', uangMasuk > 0 ? uangMasuk : '', uangKeluar > 0 ? uangKeluar : '', currentSaldo, item.keterangan || '' ];
+            
+            // ================== EDITAN 2: Ubah uangKeluar menjadi negatif ==================
+            const rowData = [ tanggalValue, item.kode || '', item.uraian || '', uangMasuk > 0 ? uangMasuk : '', uangKeluar > 0 ? -uangKeluar : '', currentSaldo, item.keterangan || '' ];
+            // ==============================================================================
             const dataRow = worksheet.addRow(rowData);
+            
             // Apply styling & Hitung Lebar Kolom
             dataRow.eachCell({ includeEmpty: true }, (cell, colNumber) => {
                  const colIndex = colNumber - 1; let cellTextLength = 0; let isDate = false;
                  if (cell.value !== null && cell.value !== undefined && cell.value !== '') {
                      if(colNumber === 1 && typeof cell.value === 'object' && cell.value instanceof Date){ cell.style = dateCellStyle; cellTextLength = 10; isDate = true; } // Terapkan style tanggal
-                     else if (typeof cell.value === 'number') { if (colNumber >= 4 && colNumber <= 6) { cell.style = rupiahCellStyle; if (colNumber === 5 && uangKeluar > 0 && !item.isMargin) cell.font = { color: { argb: 'FFFF0000' } }; cellTextLength = simpleFormatRupiahForLength(cell.value).length; } else { cell.style = numberCellStyle; cellTextLength = cell.value.toString().length; } }
+                     else if (typeof cell.value === 'number') { 
+                         if (colNumber >= 4 && colNumber <= 6) { 
+                             cell.style = rupiahCellStyle; 
+                             // ================== EDITAN 3: Hapus override warna ==================
+                             // if (colNumber === 5 && uangKeluar > 0 && !item.isMargin) cell.font = { color: { argb: 'FFFF0000' } }; // <-- DIHAPUS
+                             // ==================================================================
+                             cellTextLength = simpleFormatRupiahForLength(cell.value).length; 
+                         } else { 
+                             cell.style = numberCellStyle; cellTextLength = cell.value.toString().length; 
+                         } 
+                     }
                      else { cellTextLength = cell.value.toString().length; if (colNumber === 1) cell.style = dataCellStyle; else if (colNumber === 3 || colNumber === 7) cell.style = dataCellStyle; else if (colNumber === 2) cell.style = centerCellStyle; else cell.style = dataCellStyle; }
                      if(!isDate) updateColWidthMargin(colIndex, cellTextLength);
                  } else { cell.style = dataCellStyle; }
+                 
                  // Highlight baris Margin
                  if (item.isMargin) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFF99' } }; // Kuning Muda
             });
         });
+        
         // Baris Total Periode Margin
         worksheet.addRow([]);
-        const totalRow = worksheet.addRow(['', '', 'TOTAL PERIODE', totalMasukPeriode, totalKeluarPeriode, '', '']);
+        // ================== EDITAN 2: Ubah totalKeluarPeriode menjadi negatif ==================
+        const totalRow = worksheet.addRow(['', '', 'TOTAL PERIODE', totalMasukPeriode, -totalKeluarPeriode, '', '']);
+        // ======================================================================================
         worksheet.mergeCells(`A${totalRow.number}:B${totalRow.number}`);
         totalRow.getCell('A').style = totalStyle; totalRow.getCell('B').style = totalStyle;
         totalRow.getCell('C').value = 'TOTAL PERIODE';
         totalRow.getCell('C').style = { ...totalStyle, alignment: { horizontal: 'right'} };
         totalRow.getCell('D').style = { ...totalStyle, ...rupiahCellStyle }; // Total Masuk (Margin)
-        totalRow.getCell('E').style = { ...totalStyle, ...rupiahCellStyle, font: { bold: true, color: { argb: 'FFFF0000' } } }; // Total Keluar (Biaya)
+        
+        // ================== EDITAN 3: Hapus override warna ==================
+        // totalRow.getCell('E').style = { ...totalStyle, ...rupiahCellStyle, font: { bold: true, color: { argb: 'FFFF0000' } } }; // <-- LAMA
+        totalRow.getCell('E').style = { ...totalStyle, ...rupiahCellStyle }; // <-- BARU
+        // ==================================================================
+        
         totalRow.getCell('F').style = totalStyle; totalRow.getCell('G').style = totalStyle;
-        updateColWidthMargin(3, simpleFormatRupiahForLength(totalMasukPeriode).length); updateColWidthMargin(4, simpleFormatRupiahForLength(totalKeluarPeriode).length);
+        updateColWidthMargin(3, simpleFormatRupiahForLength(totalMasukPeriode).length); updateColWidthMargin(4, simpleFormatRupiahForLength(-totalKeluarPeriode).length);
+        
         // Terapkan Auto Width Margin
         columnWidthsMargin.forEach((width, index) => { const finalWidth = Math.min(width, 60); worksheet.getColumn(index + 1).width = finalWidth; });
+        
         // Send Response
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         res.setHeader('Content-Disposition', `attachment; filename="Laporan_Margin_${startDate}_${endDate}.xlsx"`);

@@ -37,14 +37,49 @@ export class TampilKasPage {
   }
 
   _formatRupiah(number) {
+    // Fungsi ini tetap sama, untuk format nilai positif (Uang Masuk/Keluar)
     if (number === null || number === undefined || isNaN(Number(number))) { return 'Rp 0'; }
-    const isNegative = Number(number) < 0;
     const formatted = new Intl.NumberFormat('id-ID', {
       style: 'currency', currency: 'IDR',
       minimumFractionDigits: 0, maximumFractionDigits: 0
-    }).format(Math.abs(Number(number)));
-    return formatted; // Tampilkan positif
+    }).format(Math.abs(Number(number))); // Selalu positif
+    return formatted;
   }
+
+  // ================== FUNGSI BARU DITAMBAHKAN ==================
+  /**
+   * Memformat angka menjadi Rupiah, khusus untuk Sisa Saldo.
+   * Menampilkan tanda negatif dan warna merah jika saldo minus.
+   */
+  _formatSisaSaldo(number) {
+    const num = Number(number);
+    if (isNaN(num)) {
+      return 'Rp 0';
+    }
+
+    const formatter = new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+
+    if (num < 0) {
+      // 1. Ambil nilai absolut (positif)
+      const absoluteVal = Math.abs(num);
+      // 2. Format nilai absolutnya (hasil: "Rp 19.900.000")
+      const formattedAbs = formatter.format(absoluteVal);
+      // 3. Ganti "Rp" dengan "-Rp"
+      const formattedNegative = formattedAbs.replace('Rp', '-Rp');
+      // 4. Bungkus dengan span untuk warna merah
+      return `<span class="text-danger">${formattedNegative}</span>`;
+    } else {
+      // Format positif seperti biasa
+      return formatter.format(num);
+    }
+  }
+  // ================== AKHIR FUNGSI BARU ==================
+
 
   _formatTanggal(dateString) {
      try {
@@ -99,7 +134,8 @@ export class TampilKasPage {
       saldoAwalRow.innerHTML = `
         <td>${this._formatTanggal(startDate)}</td>
         <td colspan="4" class="text-bold">SALDO AWAL</td>
-        <td class="text-right text-bold">${this._formatRupiah(currentSaldo)}</td>
+        
+        <td class="text-right text-bold">${this._formatSisaSaldo(currentSaldo)}</td>
         <td></td>
       `;
       this.tableBody.appendChild(saldoAwalRow);
@@ -126,7 +162,8 @@ export class TampilKasPage {
           <td>${trx.uraian}</td>
           <td class="text-right uang-masuk">${uangMasuk > 0 ? this._formatRupiah(uangMasuk) : '-'}</td>
           <td class="text-right uang-keluar">${uangKeluar > 0 ? this._formatRupiah(uangKeluar) : '-'}</td>
-          <td class="text-right">${this._formatRupiah(currentSaldo)}</td>
+          
+          <td class="text-right">${this._formatSisaSaldo(currentSaldo)}</td>
           <td>${trx.keterangan || ''}</td>
         `;
         this.tableBody.appendChild(row);
