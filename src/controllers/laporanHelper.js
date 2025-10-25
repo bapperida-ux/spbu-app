@@ -18,7 +18,19 @@ async function getKodeMap(model) {
   }
 }
 
-// Fungsi calculateSaldoAwalKas (Sudah Benar)
+// ================== PERBAIKAN TIMEZONE DI SEMUA FUNGSI ==================
+
+/**
+ * Helper untuk memperbaiki masalah timezone pada endDate.
+ * Mengubah '2025-10-25' (jam 00:00:00) menjadi '2025-10-25 23:59:59'.
+ */
+function getEndOfDay(dateString) {
+  const dateObj = new Date(dateString);
+  dateObj.setHours(23, 59, 59, 999);
+  return dateObj;
+}
+
+// Fungsi calculateSaldoAwalKas (DIPERBAIKI)
 async function calculateSaldoAwalKas(startDate) {
   let saldo = 0;
   const kodeKasMap = await getKodeMap(KodeKas);
@@ -61,7 +73,7 @@ async function calculateSaldoAwalKas(startDate) {
   }
 }
 
-// Fungsi calculateSaldoAwalBiaya (Sudah Benar)
+// Fungsi calculateSaldoAwalBiaya (DIPERBAIKI)
 async function calculateSaldoAwalBiaya(startDate) {
   let saldoBiaya = 0;
   const kodeBiayaMap = await getKodeMap(KodeBiaya);
@@ -94,11 +106,8 @@ async function getLaporanKasData(startDate, endDate) {
     const kodeKasMap = await getKodeMap(KodeKas);
     const saldoAwal = await calculateSaldoAwalKas(startDate);
 
-    // ================== PERBAIKAN TIMEZONE ==================
-    // Set endDate ke akhir hari (23:59:59)
-    const endDateObj = new Date(endDate);
-    endDateObj.setHours(23, 59, 59, 999);
-    // ========================================================
+    // PERBAIKAN TIMEZONE:
+    const endDateObj = getEndOfDay(endDate);
 
     const transactionsKas = await TransaksiKas.findAll({
       where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDateObj } }, // Gunakan endDateObj
@@ -132,11 +141,8 @@ async function getLaporanBiayaData(startDate, endDate) {
     const kodeBiayaMap = await getKodeMap(KodeBiaya);
     const saldoAwal = await calculateSaldoAwalBiaya(startDate);
 
-    // ================== PERBAIKAN TIMEZONE ==================
-    // Set endDate ke akhir hari (23:59:59)
-    const endDateObj = new Date(endDate);
-    endDateObj.setHours(23, 59, 59, 999);
-    // ========================================================
+    // PERBAIKAN TIMEZONE:
+    const endDateObj = getEndOfDay(endDate);
 
     const transactionsBiaya = await TransaksiBiaya.findAll({
       where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDateObj } }, // Gunakan endDateObj
@@ -172,10 +178,8 @@ async function getLaporanMarginData(startDate, endDate) {
     const kodeBiayaMap = await getKodeMap(KodeBiaya);
     const saldoAwal = await calculateSaldoAwalKas(startDate);
 
-    // ================== PERBAIKAN TIMEZONE ==================
-    const endDateObj = new Date(endDate);
-    endDateObj.setHours(23, 59, 59, 999);
-    // ========================================================
+    // PERBAIKAN TIMEZONE:
+    const endDateObj = getEndOfDay(endDate);
 
     const transactionsKasAll = await TransaksiKas.findAll({
       where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDateObj } }, // Gunakan endDateObj
@@ -193,23 +197,21 @@ async function getLaporanMarginData(startDate, endDate) {
       const jenis = detailKode ? detailKode.jenis : 'Lainnya';
       const totalAngka = parseFloat(trx.total) || 0;
       
-      // ================== PERBAIKAN BUG LOGIKA ==================
-      // Membedakan uangMasuk dan uangKeluar berdasarkan jenis
       let uangMasuk = 0;
       let uangKeluar = 0;
+      // Logika jenis biaya: Penambah (masuk), Pengurang/Pindahan (keluar)
       if (jenis === 'Penambah') {
         uangMasuk = totalAngka;
       } else {
         uangKeluar = totalAngka;
       }
-      // ==========================================================
 
       return {
         tanggal: trx.tanggal,
         kode: trx.kodeBiaya,
         uraian: detailKode ? detailKode.uraian : 'Kode Biaya Tdk Ditemukan',
-        uangMasuk: uangMasuk, // <-- Diperbaiki
-        uangKeluar: uangKeluar, // <-- Diperbaiki
+        uangMasuk: uangMasuk,
+        uangKeluar: uangKeluar,
         jenis: jenis,
         keterangan: trx.keterangan || '',
         isMargin: false
