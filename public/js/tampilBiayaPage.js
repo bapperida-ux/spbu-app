@@ -36,16 +36,52 @@ export class TampilBiayaPage {
     this.fetchAndDisplayReport();
   }
 
-  _formatRupiah(number) {
-    if (number === null || number === undefined || isNaN(Number(number))) { return 'Rp 0'; }
-    const isNegative = Number(number) < 0;
-    const formatted = new Intl.NumberFormat('id-ID', {
-      style: 'currency', currency: 'IDR',
-      minimumFractionDigits: 0, maximumFractionDigits: 0
-    }).format(Math.abs(Number(number)));
-    // Tampilkan positif (warna dari CSS)
-    return formatted;
+  // ================== FUNGSI FORMAT DIPERBARUI ==================
+  /**
+   * Formatter Rupiah Serbaguna
+   * @param {number} number - Angka yang akan diformat
+   * @param {'default' | 'saldo' | 'keluar'} [mode='default'] - Mode format
+   * - 'default': (Uang Masuk) Positif saja (Rp 123). 0 ditampilkan sbg '-'.
+   * - 'saldo': (Sisa Saldo) Bisa positif/negatif. Negatif: -Rp 123 (merah). 0 ditampilkan sbg 'Rp 0'.
+   * - 'keluar': (Uang Keluar) Positif saja. Selalu -Rp 123 (merah). 0 ditampilkan sbg '-'.
+   */
+  _formatRupiah(number, mode = 'default') {
+    const num = Number(number);
+    
+    // Tentukan tampilan untuk 0
+    if (isNaN(num) || num === 0) {
+      return (mode === 'saldo') ? 'Rp 0' : '-';
+    }
+
+    // Buat formatter
+    const formatter = new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+
+    if (mode === 'saldo') {
+      // SISA SALDO: Bisa positif atau negatif
+      if (num < 0) {
+        const formattedAbs = formatter.format(Math.abs(num)); // Hasil: "Rp 34.466.647"
+        const formattedNegative = formattedAbs.replace('Rp', '-Rp'); // Hasil: "-Rp 34.466.647"
+        return `<span class="text-danger">${formattedNegative}</span>`;
+      }
+      return formatter.format(num); // Positif atau 0
+
+    } else if (mode === 'keluar') {
+      // UANG KELUAR: Selalu merah dan diawali minus
+      const formatted = formatter.format(num); // Hasil: "Rp 34.466.647"
+      return `<span class="text-danger">-${formatted}</span>`;
+
+    } else {
+      // UANG MASUK (default): Positif saja
+      return formatter.format(num);
+    }
   }
+  // ================== AKHIR FUNGSI BARU ==================
+
 
   _formatTanggal(dateString) {
      try {
@@ -101,7 +137,7 @@ export class TampilBiayaPage {
       saldoAwalRow.innerHTML = `
         <td>${this._formatTanggal(startDate)}</td>
         <td colspan="4" class="text-bold">SALDO AWAL</td>
-        <td class="text-right text-bold">${this._formatRupiah(currentSaldo)}</td>
+        <td class="text-right text-bold">${this._formatRupiah(currentSaldo, 'saldo')}</td>
         <td></td>
       `;
       this.tableBody.appendChild(saldoAwalRow);
@@ -111,13 +147,15 @@ export class TampilBiayaPage {
         let uangKeluar = 0;
         const totalAngka = parseFloat(trx.total) || 0;
 
+        // PERBAIKAN PERHITUNGAN: Logika Anda sudah benar,
+        // pastikan "Gaji" (111) memiliki jenis "Pengurang" di database.
         if (trx.jenis === 'Penambah') {
           uangMasuk = totalAngka;
           currentSaldo += totalAngka;
           totalMasukPeriode += totalAngka;
-        } else {
+        } else { // Pengurang atau Pindahan
           uangKeluar = totalAngka;
-          currentSaldo -= totalAngka;
+          currentSaldo -= totalAngka; // Ini akan membuat currentSaldo menjadi negatif
           totalKeluarPeriode += totalAngka;
         }
 
@@ -126,24 +164,29 @@ export class TampilBiayaPage {
           <td>${this._formatTanggal(trx.tanggal)}</td>
           <td>${trx.kode}</td>
           <td>${trx.uraian}</td>
-          <td class="text-right uang-masuk">${uangMasuk > 0 ? this._formatRupiah(uangMasuk) : '-'}</td>
-          <td class="text-right uang-keluar">${uangKeluar > 0 ? this._formatRupiah(uangKeluar) : '-'}</td>
-          <td class="text-right">${this._formatRupiah(currentSaldo)}</td>
+          <td class="text-right uang-masuk">${this._formatRupiah(uangMasuk, 'default')}</td>
+          <td class="text-right uang-keluar">${this._formatRupiah(uangKeluar, 'keluar')}</td>
+          <td class="text-right">${this._formatRupiah(currentSaldo, 'saldo')}</td>
           <td>${trx.keterangan || ''}</td>
         `;
         this.tableBody.appendChild(row);
       });
 
-      this.totalMasukEl.innerText = this._formatRupiah(totalMasukPeriode);
-      this.totalKeluarEl.innerText = this._formatRupiah(totalKeluarPeriode); // Tampilkan positif
+      // ================== PERBAIKAN FORMAT TOTAL ==================
+      // Gunakan innerHTML karena format mungkin berisi tag <span>
+      this.totalMasukEl.innerHTML = this._formatRupiah(totalMasukPeriode, 'saldo'); // 'saldo' agar 'Rp 0'
+      this.totalKeluarEl.innerHTML = this._formatRupiah(totalKeluarPeriode, 'keluar');
+      // ============================================================
 
     } catch (error) {
       this.notification.show('Gagal memuat laporan biaya', 'error');
       console.error("Detail Error Laporan Biaya:", error);
       this.tableBody.innerHTML = `<tr><td colspan="7">Gagal memuat data. (${error.message})</td></tr>`;
-      // Reset total jika error
-      this.totalMasukEl.innerText = this._formatRupiah(0);
-      this.totalKeluarEl.innerText = this._formatRupiah(0);
+      
+      // ================== PERBAIKAN FORMAT ERROR ==================
+      this.totalMasukEl.innerHTML = this._formatRupiah(0, 'saldo');
+      this.totalKeluarEl.innerHTML = this._formatRupiah(0, 'keluar');
+      // ============================================================
     }
   }
 
@@ -158,10 +201,8 @@ export class TampilBiayaPage {
       return;
     }
 
-    // ===== PERBAIKAN: Gunakan URL relatif =====
     const exportUrl = `/api/export/biaya?startDate=${startDate}&endDate=${endDate}`;
-    // =======================================
-
+    
     console.log("Membuka URL Ekspor Biaya:", exportUrl);
     window.open(exportUrl, '_blank');
   }

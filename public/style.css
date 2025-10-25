@@ -617,3 +617,9 @@ body {
   border-top: 2px solid var(--text-dark);
   padding-top: 15px !important;
 }
+
+/* Tambahkan ini di file CSS Anda, misalnya style.css */
+
+.text-danger {
+  color: red;
+}
