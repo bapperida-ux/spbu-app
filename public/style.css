@@ -622,5 +622,20 @@ body {
   color: red;
 }
 
+#dashboard-saldo-biaya {
+  /* Option 1: Set a smaller fixed font size */
+  /* font-size: 1.5rem; */ /* Adjust this value (e.g., 1.2rem, 1.4rem) until it fits */
+
+  /* Option 2 (Recommended): Responsive Font Size using clamp() */
+  /* Adjust min, preferred, and max font sizes as needed */
+  font-size: clamp(1rem, 3vw, 1.75rem); 
+  
+  /* Optional: Prevent wrapping and add ellipsis if it's still too long */
+  white-space: nowrap;      /* Keep text on a single line */
+  overflow: hidden;         /* Hide overflowing text */
+  text-overflow: ellipsis;  /* Add "..." at the end */
+  line-height: 1.2;         /* Adjust line height if needed */
+}
+
 .text-success { color: green; } /* Untuk Uang Masuk */
 .margin-highlight { background-color: #fcf8e3; } /* Kuning muda */
