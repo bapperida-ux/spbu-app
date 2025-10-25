@@ -89,9 +89,8 @@ export class InputKasPage {
         } else if (deleteButton) {
             const id = deleteButton.getAttribute('data-id');
             if (id && id !== 'null' && id !== 'undefined' && !id.startsWith('invalid-trx-id')) {
-              // ================== EDITAN DI SINI ==================
+              // Kode ini sudah benar
               this._handleDelete(id, deleteButton);
-              // ====================================================
             }
              else console.error('Tombol Delete InputKas tidak memiliki data-id valid.');
         }
@@ -132,7 +131,8 @@ export class InputKasPage {
         return;
     }
     try {
-      const kodeKasList = await this.api.get('/api/kodekas');
+      // Tambahkan cache buster
+      const kodeKasList = await this.api.get(`/api/kodekas?_=${new Date().getTime()}`);
       this.kodeKasMap.clear();
 
       const choicesOptions = [{ value: '', label: 'Pilih Kode Kas...', selected: true, disabled: true }];
@@ -145,7 +145,7 @@ export class InputKasPage {
         });
       });
 
-      // ===== PERBAIKAN: Gunakan setChoices jika instance sudah ada =====
+      // Gunakan setChoices jika instance sudah ada
       if (this.choicesInstance) {
         // console.log("Instance Choices.js (Kas) sudah ada, memperbarui pilihan..."); // Aktifkan jika perlu debug
         this.choicesInstance.setChoices(choicesOptions, 'value', 'label', true);
@@ -158,19 +158,15 @@ export class InputKasPage {
           shouldSort: false,
         });
       }
-      // ====================================================================
-
       // console.log("Dropdown KodeKas berhasil dimuat/diperbarui."); // Aktifkan jika perlu debug
 
     } catch (error) {
       console.error("Error memuat dropdown KodeKas:", error);
       this.notification.show('Gagal memuat daftar Kode Kas', 'error');
-      // Jika gagal, reset state Choices.js
       if (this.choicesInstance) {
           this.choicesInstance.destroy();
           this.choicesInstance = null;
       }
-      // Pastikan elemen select masih ada sebelum ubah HTML
        if (this.kodeKasSelect) {
            this.kodeKasSelect.innerHTML = '<option value="">Gagal memuat</option>';
        }
@@ -180,13 +176,13 @@ export class InputKasPage {
 
   async _loadTable() {
     // console.log("Memuat tabel InputKas..."); // Aktifkan jika perlu debug
-    // Pastikan elemen tabel masih ada
     if (!this.tableBody) {
         console.error("Elemen tabel InputKas tidak ditemukan saat _loadTable.");
         return;
     }
     try {
-      const transactions = await this.api.get('/api/transaksikas?limit=10&sort=desc');
+      // Tambahkan cache buster
+      const transactions = await this.api.get(`/api/transaksikas?limit=10&sort=desc&_=${new Date().getTime()}`);
       this.tableBody.innerHTML = '';
 
       if (transactions && Array.isArray(transactions)) {
@@ -249,15 +245,16 @@ export class InputKasPage {
     if (this.simpanBtn) this.simpanBtn.innerText = 'Simpan';
     if (this.formTitle) this.formTitle.innerText = 'Formulir Input Kas';
     this._setDefaultTanggal();
+    
+    // ================== PERBAIKAN DI SINI ==================
+    // Memperbaiki bug dropdown hilang setelah simpan
     if(this.choicesInstance) {
-        // Coba reset pilihan dan input pencarian
         try {
-            this.choicesInstance.clearStore(); // Hapus semua pilihan
-            this.choicesInstance.setChoices([{ value: '', label: 'Pilih Kode Kas...', selected: true, disabled: true }], 'value', 'label', true); // Tambah placeholder lagi
-            this.choicesInstance.clearInput(); // Hapus teks di input
+            // HANYA reset pilihan ke placeholder, jangan hapus semua opsi
+            this.choicesInstance.setChoiceByValue(''); 
+            this.choicesInstance.clearInput(); // Hapus teks pencarian
         } catch (e) {
-            console.error("Gagal mereset Choices.js:", e);
-            // Fallback jika error
+            console.error("Gagal mereset Choices.js (Kas):", e);
             if (this.kodeKasSelect) this.kodeKasSelect.value = '';
         }
 
@@ -265,6 +262,8 @@ export class InputKasPage {
         // Fallback jika instance tidak ada
         this.kodeKasSelect.value = '';
     }
+    // =======================================================
+
     const formContainer = this.form ? this.form.closest('.form-container') : null;
     if (formContainer) formContainer.classList.remove('editing');
   }
@@ -299,9 +298,7 @@ export class InputKasPage {
     }
   }
 
-  // ================== EDITAN DI SINI ==================
   async _handleDelete(id, deleteButtonElement) {
-  // ====================================================
     // console.log(`Memulai _handleDelete InputKas untuk ID: ${id}`); // Aktifkan jika perlu debug
     if (!confirm('Apakah Anda yakin ingin menghapus transaksi kas ini?')) {
         // console.log("Penghapusan TransaksiKas dibatalkan."); // Aktifkan jika perlu debug
@@ -318,8 +315,7 @@ export class InputKasPage {
           this._resetForm();
       }
 
-      // ================== EDITAN DI SINI ==================
-      // Ganti _loadTable() dengan manipulasi DOM
+      // Kode ini sudah benar untuk menghapus baris
       if (deleteButtonElement) {
         deleteButtonElement.closest('tr').remove();
       } else {
@@ -327,7 +323,6 @@ export class InputKasPage {
         console.warn("deleteButtonElement tidak ada, _loadTable() dijalankan sebagai fallback.");
         await this._loadTable();
       }
-      // ====================================================
 
     } catch (error) {
       console.error(`Error di _handleDelete InputKas untuk ID ${id}:`, error);
