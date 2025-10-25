@@ -88,14 +88,20 @@ async function calculateSaldoAwalBiaya(startDate) {
   }
 }
 
-// Fungsi getLaporanKasData (Sudah Benar)
+// Fungsi getLaporanKasData (DIPERBAIKI)
 async function getLaporanKasData(startDate, endDate) {
   try {
     const kodeKasMap = await getKodeMap(KodeKas);
     const saldoAwal = await calculateSaldoAwalKas(startDate);
 
+    // ================== PERBAIKAN TIMEZONE ==================
+    // Set endDate ke akhir hari (23:59:59)
+    const endDateObj = new Date(endDate);
+    endDateObj.setHours(23, 59, 59, 999);
+    // ========================================================
+
     const transactionsKas = await TransaksiKas.findAll({
-      where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDate } },
+      where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDateObj } }, // Gunakan endDateObj
       order: [['tanggal', 'ASC'], ['createdAt', 'ASC']]
     });
 
@@ -116,19 +122,24 @@ async function getLaporanKasData(startDate, endDate) {
     return { saldoAwal, transaksi: processedKas };
   } catch (error) {
       console.error("Error generating laporan kas:", error);
-      // Melempar error lagi agar ditangkap controller
       throw new Error("Gagal membuat data laporan kas.");
   }
 }
 
-// Fungsi getLaporanBiayaData (Sudah Benar)
+// Fungsi getLaporanBiayaData (DIPERBAIKI)
 async function getLaporanBiayaData(startDate, endDate) {
   try {
     const kodeBiayaMap = await getKodeMap(KodeBiaya);
-    const saldoAwal = await calculateSaldoAwalBiaya(startDate); // Menggunakan saldo biaya
+    const saldoAwal = await calculateSaldoAwalBiaya(startDate);
+
+    // ================== PERBAIKAN TIMEZONE ==================
+    // Set endDate ke akhir hari (23:59:59)
+    const endDateObj = new Date(endDate);
+    endDateObj.setHours(23, 59, 59, 999);
+    // ========================================================
 
     const transactionsBiaya = await TransaksiBiaya.findAll({
-      where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDate } },
+      where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDateObj } }, // Gunakan endDateObj
       order: [['tanggal', 'ASC'], ['createdAt', 'ASC']]
     });
 
@@ -156,35 +167,50 @@ async function getLaporanBiayaData(startDate, endDate) {
 
 // ===== FUNGSI GETLAPORANMARGINDATA (DIPERBAIKI) =====
 async function getLaporanMarginData(startDate, endDate) {
-  try { // Tambahkan try...catch utama
+  try {
     const kodeKasMap = await getKodeMap(KodeKas);
     const kodeBiayaMap = await getKodeMap(KodeBiaya);
-    const saldoAwal = await calculateSaldoAwalKas(startDate); // Laporan Margin pakai Saldo Kas Awal
+    const saldoAwal = await calculateSaldoAwalKas(startDate);
+
+    // ================== PERBAIKAN TIMEZONE ==================
+    const endDateObj = new Date(endDate);
+    endDateObj.setHours(23, 59, 59, 999);
+    // ========================================================
 
     const transactionsKasAll = await TransaksiKas.findAll({
-      where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDate } },
+      where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDateObj } }, // Gunakan endDateObj
       order: [['tanggal', 'ASC'], ['createdAt', 'ASC']]
     });
 
     const transactionsBiayaAll = await TransaksiBiaya.findAll({
-      where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDate } },
+      where: { tanggal: { [Op.gte]: startDate, [Op.lte]: endDateObj } }, // Gunakan endDateObj
       order: [['tanggal', 'ASC'], ['createdAt', 'ASC']]
     });
 
     const processedBiaya = transactionsBiayaAll.map(trxInstance => {
-      // PERBAIKAN: Gunakan .toJSON() di sini
       const trx = trxInstance.toJSON();
       const detailKode = kodeBiayaMap.get(trx.kodeBiaya);
       const jenis = detailKode ? detailKode.jenis : 'Lainnya';
-      // PERBAIKAN: Pastikan parseFloat() dipanggil
       const totalAngka = parseFloat(trx.total) || 0;
+      
+      // ================== PERBAIKAN BUG LOGIKA ==================
+      // Membedakan uangMasuk dan uangKeluar berdasarkan jenis
+      let uangMasuk = 0;
+      let uangKeluar = 0;
+      if (jenis === 'Penambah') {
+        uangMasuk = totalAngka;
+      } else {
+        uangKeluar = totalAngka;
+      }
+      // ==========================================================
+
       return {
         tanggal: trx.tanggal,
         kode: trx.kodeBiaya,
         uraian: detailKode ? detailKode.uraian : 'Kode Biaya Tdk Ditemukan',
-        uangMasuk: 0,
-        uangKeluar: totalAngka, // Gunakan angka
-        jenis: jenis, // Sertakan jenis
+        uangMasuk: uangMasuk, // <-- Diperbaiki
+        uangKeluar: uangKeluar, // <-- Diperbaiki
+        jenis: jenis,
         keterangan: trx.keterangan || '',
         isMargin: false
       };
@@ -192,25 +218,21 @@ async function getLaporanMarginData(startDate, endDate) {
 
     const processedMargin = transactionsKasAll
       .filter(txInstance => {
-        // PERBAIKAN: Gunakan .toJSON() di sini
         const tx = txInstance.toJSON();
         const detailKode = kodeKasMap.get(tx.kodeKas);
-        // Pastikan detailKode ada sebelum akses uraian
         const uraianLower = detailKode ? String(detailKode.uraian).trim().toLowerCase() : "";
         return uraianLower === 'margin';
       })
       .map(txInstance => {
-        // PERBAIKAN: Gunakan .toJSON() di sini
         const tx = txInstance.toJSON();
-        // PERBAIKAN: Pastikan parseFloat() dipanggil
         const totalAngka = parseFloat(tx.total) || 0;
         return {
           tanggal: tx.tanggal,
           kode: tx.kodeKas,
           uraian: 'Margin Harian',
-          uangMasuk: totalAngka, // Gunakan angka
+          uangMasuk: totalAngka,
           uangKeluar: 0,
-          jenis: 'Penambah', // Margin selalu penambah
+          jenis: 'Penambah',
           keterangan: tx.keterangan || '',
           isMargin: true
         };
@@ -218,17 +240,14 @@ async function getLaporanMarginData(startDate, endDate) {
 
     const combinedData = [...processedBiaya, ...processedMargin];
 
-    // Perbaiki sort agar stabil jika tanggal sama
     combinedData.sort((a, b) => {
       const dateA = new Date(a.tanggal);
       const dateB = new Date(b.tanggal);
       if (dateA < dateB) return -1;
       if (dateA > dateB) return 1;
-      // Jika tanggal sama, mungkin perlu sort berdasarkan createdAt jika model punya
-      // atau berdasarkan isMargin (biaya dulu baru margin?)
-      if (!a.isMargin && b.isMargin) return -1; // Biaya sebelum margin
-      if (a.isMargin && !b.isMargin) return 1;  // Margin setelah biaya
-      return 0; // Urutan asli jika sama
+      if (!a.isMargin && b.isMargin) return -1;
+      if (a.isMargin && !b.isMargin) return 1;
+      return 0;
     });
 
     return {
@@ -237,7 +256,7 @@ async function getLaporanMarginData(startDate, endDate) {
     };
   } catch (error) {
     console.error("Error generating laporan margin:", error);
-    throw new Error("Gagal membuat data laporan margin."); // Lempar error
+    throw new Error("Gagal membuat data laporan margin.");
   }
 }
 // =================================================
