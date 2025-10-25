@@ -88,9 +88,8 @@ export class InputBiayaPage {
         } else if (deleteButton) {
             const id = deleteButton.getAttribute('data-id');
             if (id && id !== 'null' && id !== 'undefined' && !id.startsWith('invalid-trx-id')) {
-              // ================== EDITAN DI SINI ==================
+              // Kirim elemen tombol ke _handleDelete
               this._handleDelete(id, deleteButton);
-              // ====================================================
             }
              else console.error('Tombol Delete InputBiaya tidak memiliki data-id valid.');
         }
@@ -131,7 +130,8 @@ export class InputBiayaPage {
         return;
     }
     try {
-      const kodeBiayaList = await this.api.get('/api/kodebiaya');
+      // Tambahkan cache buster
+      const kodeBiayaList = await this.api.get(`/api/kodebiaya?_=${new Date().getTime()}`);
       this.kodeBiayaMap.clear();
 
       const choicesOptions = [{ value: '', label: 'Pilih Kode Biaya...', selected: true, disabled: true }];
@@ -184,7 +184,8 @@ export class InputBiayaPage {
         return;
     }
     try {
-      const transactions = await this.api.get('/api/transaksibiaya?limit=10&sort=desc');
+      // Tambahkan cache buster
+      const transactions = await this.api.get(`/api/transaksibiaya?limit=10&sort=desc&_=${new Date().getTime()}`);
       this.tableBody.innerHTML = '';
 
       if (transactions && Array.isArray(transactions)) {
@@ -288,9 +289,7 @@ export class InputBiayaPage {
     }
   }
 
-  // ================== EDITAN DI SINI ==================
   async _handleDelete(id, deleteButtonElement) {
-  // ====================================================
     // console.log(`Memulai _handleDelete InputBiaya untuk ID: ${id}`); // Aktifkan jika perlu debug
     if (!confirm('Apakah Anda yakin ingin menghapus transaksi biaya ini?')) {
         // console.log("Penghapusan TransaksiBiaya dibatalkan."); // Aktifkan jika perlu debug
@@ -305,8 +304,7 @@ export class InputBiayaPage {
           this._resetForm();
       }
       
-      // ================== EDITAN DI SINI ==================
-      // Ganti _loadTable() dengan manipulasi DOM
+      // Logika ini sudah benar: Hapus baris dari DOM
       if (deleteButtonElement) {
         deleteButtonElement.closest('tr').remove();
       } else {
@@ -314,7 +312,6 @@ export class InputBiayaPage {
         console.warn("deleteButtonElement tidak ada, _loadTable() dijalankan sebagai fallback.");
         await this._loadTable();
       }
-      // ====================================================
 
     } catch (error) {
       console.error(`Error di _handleDelete InputBiaya untuk ID ${id}:`, error);
