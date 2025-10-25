@@ -59,27 +59,31 @@
       <header class="page-header"><h2>Dashboard</h2><div class="search-bar"><input type="text" placeholder="Search here..."></div></header>
       
       <div class="stat-cards">
-        <div class="card card-gradient-red"> <p>Sisa Saldo Biaya</p> 
-          <h3 id="dashboard-saldo-biaya">Rp 0</h3> </div>
-        
+        <div class="card card-gradient-blue"> <p>Sisa Saldo Biaya</p> 
+          <h3 id="dashboard-saldo-biaya">Rp 0</h3> 
+        </div>
         <div class="card card-gradient-green"><p>Paid Invoices</p><h3 id="paid-invoices">0</h3></div>
         <div class="card card-gradient-orange"><p>Unpaid Invoices</p><h3 id="unpaid-invoices">0</h3></div>
         <div class="card card-gradient-gray"><p>Total Invoices Sent</p><h3 id="total-sent">0</h3></div>
       </div>
       <div class="main-widgets"><div class="widget-balance card card-gradient-blue"><h3>Wallet Balance</h3><h1 id="wallet-balance">$0.00</h1><p id="wallet-change">+0.0%</p></div><div class="widget-overview card"><h3>Card's Overview</h3><p>(Data Chart akan ada di sini)</p></div></div>
     </div> 
+    
     <div class="page-content hidden" id="input-kode-kas">
       <header class="page-header"><h2>Input Kode Kas</h2></header>
       <div class="content-layout"><div class="form-container card"><h3 id="form-kode-kas-title">Formulir Input Kode Kas</h3><form id="form-kode-kas"><div class="form-group"><label for="kode-kas-kode">Kode Kas</label><input type="text" id="kode-kas-kode" placeholder="Contoh: 1011" required><p class="helper-text">Kode tidak boleh duplikat.</p></div><div class="form-group"><label for="kode-kas-uraian">Uraian</label><input type="text" id="kode-kas-uraian" placeholder="Contoh: Penjualan Pertalite" required></div><div class="form-group"><label for="kode-kas-jenis">Jenis</label><select id="kode-kas-jenis" required><option value="">-- Pilih Jenis --</option><option value="Penambah">Penambah</option><option value="Pengurang">Pengurang</option><option value="Pindahan">Pindahan</option></select></div><div class="form-buttons"><button type="submit" class="btn btn-simpan">Simpan</button><button type="button" class="btn btn-batal">Batal</button></div></form></div><div class="table-container card"><h3>Data Kode Kas Tersimpan</h3><table id="tabel-kode-kas"><thead><tr><th>Kode</th><th>Uraian</th><th>Jenis</th><th>Aksi</th></tr></thead><tbody id="tabel-kode-kas-body"></tbody></table></div></div>
     </div> 
+    
     <div class="page-content hidden" id="input-kode-biaya">
       <header class="page-header"><h2>Input Kode Biaya</h2></header>
       <div class="content-layout"><div class="form-container card"><h3 id="form-kode-biaya-title">Formulir Kode Biaya</h3><form id="form-kode-biaya"><div class="form-group"><label for="kode-biaya-kode">Kode Biaya</label><input type="text" id="kode-biaya-kode" placeholder="Contoh: 5111" required><p class="helper-text">Kode tidak boleh duplikat.</p></div><div class="form-group"><label for="kode-biaya-uraian">Uraian</label><input type="text" id="kode-biaya-uraian" placeholder="Contoh: Gaji Karyawan" required></div><div class="form-group"><label for="kode-biaya-jenis">Jenis</label><select id="kode-biaya-jenis" required><option value="">-- Pilih Jenis --</option><option value="Penambah">Penambah</option><option value="Pengurang">Pengurang</option><option value="Pindahan">Pindahan</option></select></div><div class="form-buttons"><button type="submit" class="btn btn-simpan">Simpan</button><button type="button" class="btn btn-batal">Batal</button></div></form></div><div class="table-container card"><h3>Data Kode Biaya Tersimpan</h3><table id="tabel-kode-biaya"><thead><tr><th>Kode</th><th>Uraian</th><th>Jenis</th><th>Aksi</th></tr></thead><tbody id="tabel-kode-biaya-body"></tbody></table></div></div>
     </div> 
+    
     <div class="page-content hidden" id="input-kas">
       <header class="page-header"><h2>Input Kas</h2></header>
       <div class="content-layout"><div class="form-container card"><h3 id="form-input-kas-title">Formulir Input Kas</h3><form id="form-input-kas"><div class="form-group"><label for="input-kas-kode">Kode Kas</label><select id="input-kas-kode" required></select></div><div class="form-group"><label for="input-kas-tanggal">Tanggal</label><input type="date" id="input-kas-tanggal" required></div><div class="form-group"><label for="input-kas-total">Total (Rp)</label><input type="number" id="input-kas-total" placeholder="Contoh: 500000" required></div><div class="form-group"><label for="input-kas-keterangan">Keterangan</label><textarea id="input-kas-keterangan" rows="3" placeholder="Tulis keterangan tambahan (jika ada)"></textarea></div><div class="form-buttons"><button type="submit" class="btn btn-simpan">Simpan Transaksi</button><button type="button" class="btn btn-batal">Batal</button></div></form></div><div class="table-container card"><h3>Data Kas Hari Ini</h3><table id="tabel-input-kas"><thead><tr><th>Tanggal</th><th>Kode</th><th>Uraian</th> <th>Jenis</th> <th class="text-right">Total (Rp)</th><th>Keterangan</th> <th>Aksi</th></tr></thead><tbody id="tabel-input-kas-body"></tbody></table></div></div>
     </div> 
+    
     <div class="page-content hidden" id="input-biaya">
       <header class="page-header"><h2>Input Biaya</h2></header>
       <div class="content-layout"><div class="form-container card"><h3 id="form-input-biaya-title">Formulir Input Biaya</h3><form id="form-input-biaya"><div class="form-group"><label for="input-biaya-kode">Kode Biaya</label><select id="input-biaya-kode" required></select></div><div class="form-group"><label for="input-biaya-tanggal">Tanggal</label><input type="date" id="input-biaya-tanggal" required></div><div class="form-group"><label for="input-biaya-total">Total (Rp)</label><input type="number" id="input-biaya-total" placeholder="Contoh: 150000" required></div><div class="form-group"><label for="input-biaya-keterangan">Keterangan</label><textarea id="input-biaya-keterangan" rows="3" placeholder="Tulis keterangan tambahan (jika ada)"></textarea></div><div class="form-buttons"><button type="submit" class="btn btn-simpan">Simpan Transaksi</button><button type="button" class="btn btn-batal">Batal</button></div></form></div><div class="table-container card"><h3>Data Biaya Hari Ini</h3><table id="tabel-input-biaya"><thead><tr><th>Tanggal</th><th>Kode</th><th>Uraian</th> <th>Jenis</th><th class="text-right">Total (Rp)</th><th>Keterangan</th><th>Aksi</th></tr></thead><tbody id="tabel-input-biaya-body"></tbody></table></div></div>
