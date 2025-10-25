@@ -66,7 +66,12 @@ export class KodeKasPage {
       } else if (deleteButton) {
         const id = deleteButton.getAttribute('data-id');
         // console.log('Tombol Delete KodeKas diklik. ID:', id); // Aktifkan jika perlu debug
-        if (id && id !== 'null' && id !== 'undefined' && !id.startsWith('invalid-id')) this._handleDelete(id);
+        if (id && id !== 'null' && id !== 'undefined' && !id.startsWith('invalid-id')) {
+          // ================== EDITAN DI SINI ==================
+          // Mengirim elemen tombol yang diklik ke _handleDelete
+          this._handleDelete(id, deleteButton);
+          // ====================================================
+        }
         else console.error('Tombol Delete KodeKas tidak memiliki data-id valid.');
       }
     });
@@ -103,6 +108,8 @@ export class KodeKasPage {
     const itemId = item && item.id ? item.id : `invalid-id-${Math.random()}`;
     if (!item || !item.id) { console.warn("Membuat baris KodeKas tanpa ID valid:", item); }
 
+    // Menambahkan ID pada elemen <tr> untuk manipulasi DOM yang lebih mudah
+    row.id = `kodekas-row-${itemId}`; 
     row.innerHTML = `
       <td>${item?.kode ?? '-'}</td>
       <td>${item?.uraian ?? '-'}</td>
@@ -153,7 +160,10 @@ export class KodeKasPage {
     }
   }
 
-  async _handleDelete(id) {
+  // ================== EDITAN DI SINI ==================
+  // Menerima 'deleteButtonElement' sebagai argumen kedua
+  async _handleDelete(id, deleteButtonElement) {
+  // ====================================================
     // console.log(`Memulai _handleDelete KodeKas untuk ID: ${id}`); // Aktifkan jika perlu debug
     if (!confirm(`Apakah Anda yakin ingin menghapus kode kas dengan ID: ${id}?`)) {
         // console.log("Penghapusan KodeKas dibatalkan."); // Aktifkan jika perlu debug
@@ -170,7 +180,18 @@ export class KodeKasPage {
           this._resetForm();
       }
 
-      await this._loadTable();
+      // ================== EDITAN DI SINI ==================
+      // Ganti _loadTable() dengan manipulasi DOM
+      if (deleteButtonElement) {
+        // Cari elemen <tr> terdekat dari tombol dan hapus
+        deleteButtonElement.closest('tr').remove();
+      } else {
+        // Fallback jika elemen tidak terkirim (meskipun seharusnya terkirim)
+        console.warn("deleteButtonElement tidak ada, _loadTable() dijalankan sebagai fallback.");
+        await this._loadTable();
+      }
+      // ====================================================
+
     } catch (error) {
       console.error(`Error di _handleDelete KodeKas untuk ID ${id}:`, error);
       this.notification.show(`Error: ${error.message || 'Gagal menghapus data'}`, 'error');
