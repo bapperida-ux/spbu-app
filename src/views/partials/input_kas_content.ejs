@@ -1,0 +1,45 @@
+<header class="page-header"><h2>Input Kas</h2></header>
+<div class="content-layout">
+    <div class="form-container card">
+        <h3 id="form-input-kas-title">Formulir Input Kas</h3>
+        <form id="form-input-kas">
+            <div class="form-group">
+                <label for="input-kas-kode">Kode Kas</label>
+                <select id="input-kas-kode" required></select>
+            </div>
+            <div class="form-group">
+                <label for="input-kas-tanggal">Tanggal</label>
+                <input type="date" id="input-kas-tanggal" required>
+            </div>
+            <div class="form-group">
+                <label for="input-kas-total">Total (Rp)</label>
+                <input type="number" id="input-kas-total" placeholder="Contoh: 500000" required>
+            </div>
+            <div class="form-group">
+                <label for="input-kas-keterangan">Keterangan</label>
+                <textarea id="input-kas-keterangan" rows="3" placeholder="Tulis keterangan tambahan (jika ada)"></textarea>
+            </div>
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-simpan">Simpan Transaksi</button>
+                <button type="button" class="btn btn-batal">Batal</button>
+            </div>
+        </form>
+    </div>
+    <div class="table-container card">
+        <h3>Data Kas Hari Ini</h3>
+        <table id="tabel-input-kas">
+            <thead>
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Kode</th>
+                    <th>Uraian</th>
+                    <th>Jenis</th>
+                    <th class="text-right">Total (Rp)</th>
+                    <th>Keterangan</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="tabel-input-kas-body"></tbody>
+        </table>
+    </div>
+</div>

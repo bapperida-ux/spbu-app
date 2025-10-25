@@ -1,0 +1,38 @@
+<header class="page-header report-header">
+    <h2>Buku Margin</h2>
+    <div class="filter-container">
+        <label for="margin-start-date">Dari:</label>
+        <input type="date" id="margin-start-date">
+        <label for="margin-end-date">Sampai:</label>
+        <input type="date" id="margin-end-date">
+        <button id="margin-filter-btn" class="btn btn-filter">Tampilkan</button>
+        <button id="margin-export-excel-btn" class="btn btn-export"> <i class="ri-file-excel-2-line"></i> Ekspor</button>
+    </div>
+</header>
+<div class="table-container card">
+    <h3 class="table-title">Rincian & Margin</h3>
+    <table id="tabel-laporan-margin">
+        <thead>
+            <tr>
+                <th>Tanggal</th>
+                <th>Kode</th>
+                <th>Uraian</th>
+                <th class="text-right">Uang Masuk (Rp)</th>
+                <th class="text-right">Uang Keluar (Rp)</th>
+                <th class="text-right">Sisa Saldo (Rp)</th>
+                <th>Keterangan</th>
+            </tr>
+        </thead>
+        <tbody id="tabel-laporan-margin-body">
+            <tr><td colspan="7">Pilih rentang tanggal dan klik "Tampilkan".</td></tr>
+        </tbody>
+        <tfoot class="table-footer-totals">
+            <tr>
+                <td colspan="3" class="text-bold text-right">TOTAL BIAYA & MARGIN PERIODE</td>
+                <td id="margin-total-masuk" class="text-bold text-right text-success">Rp 0</td>
+                <td id="margin-total-keluar" class="text-bold text-right text-danger">Rp 0</td>
+                <td colspan="2"></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>

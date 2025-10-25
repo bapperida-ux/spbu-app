@@ -1,0 +1,44 @@
+<header class="page-header"><h2>Input Kode Kas</h2></header>
+<div class="content-layout">
+    <div class="form-container card">
+        <h3 id="form-kode-kas-title">Formulir Input Kode Kas</h3>
+        <form id="form-kode-kas">
+            <div class="form-group">
+                <label for="kode-kas-kode">Kode Kas</label>
+                <input type="text" id="kode-kas-kode" placeholder="Contoh: 1011" required>
+                <p class="helper-text">Kode tidak boleh duplikat.</p>
+            </div>
+            <div class="form-group">
+                <label for="kode-kas-uraian">Uraian</label>
+                <input type="text" id="kode-kas-uraian" placeholder="Contoh: Penjualan Pertalite" required>
+            </div>
+            <div class="form-group">
+                <label for="kode-kas-jenis">Jenis</label>
+                <select id="kode-kas-jenis" required>
+                    <option value="">-- Pilih Jenis --</option>
+                    <option value="Penambah">Penambah</option>
+                    <option value="Pengurang">Pengurang</option>
+                    <option value="Pindahan">Pindahan</option>
+                </select>
+            </div>
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-simpan">Simpan</button>
+                <button type="button" class="btn btn-batal">Batal</button>
+            </div>
+        </form>
+    </div>
+    <div class="table-container card">
+        <h3>Data Kode Kas Tersimpan</h3>
+        <table id="tabel-kode-kas">
+            <thead>
+                <tr>
+                    <th>Kode</th>
+                    <th>Uraian</th>
+                    <th>Jenis</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="tabel-kode-kas-body"></tbody>
+        </table>
+    </div>
+</div>

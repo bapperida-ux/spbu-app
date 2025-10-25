@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPBU Kolongan</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style> body { font-family: 'Roboto', sans-serif; } </style>
+</head>
+<body>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            
+            <button id="sidebar-toggle" class="sidebar-toggle-btn">
+                <i class="ri-menu-line"></i>
+            </button>
+            
+            <h2 id="app-title">
+                <i class="ri-gas-station-fill app-icon"></i> <span class="sidebar-title-text">SPBU Kolongan</span>
+            </h2>
+        </div>
+        <ul class="nav-list">
+            <li class="nav-link active" data-target="dashboard"> <span class="nav-icon">📊</span> <span class="nav-text">Dashboard</span> </li>
+            <p class="menu-header"><span class="nav-text">MASTER DATA</span></p>
+            <li class="nav-link" data-target="input-kode-kas"> <span class="nav-icon">🗃️</span> <span class="nav-text">Input Kode Kas</span> </li>
+            <li class="nav-link" data-target="input-kode-biaya"> <span class="nav-icon">💸</span> <span class="nav-text">Input Kode Biaya</span> </li>
+            <p class="menu-header"><span class="nav-text">TRANSAKSI</span></p>
+            <li class="nav-link" data-target="input-kas"> <span class="nav-icon">📥</span> <span class="nav-text">Input Kas</span> </li>
+            <li class="nav-link" data-target="input-biaya"> <span class="nav-icon">📤</span> <span class="nav-text">Input Biaya</span> </li>
+            <p class="menu-header"><span class="nav-text">LAPORAN</span></p>
+            <li class="nav-link" data-target="tampil-kas"> <span class="nav-icon">📄</span> <span class="nav-text">Tampil Kas</span> </li>
+            <li class="nav-link" data-target="tampil-biaya"> <span class="nav-icon">📈</span> <span class="nav-text">Tampil Biaya</span> </li>
+            <li class="nav-link" data-target="buku-margin"> <span class="nav-icon">💹</span> <span class="nav-text">Buku Margin</span> </li>
+        </ul>
+    </div>
+
+    <div class="main-content" id="main-content">
+
+        <header class="page-header">
+            <div class="header-right-items"> 
+                <% if (locals.user) { %>
+                    <span class="text-gray-700 hidden sm:inline">Halo, <%= user.nama_lengkap || user.username %>!</span> 
+                <% } %>
+                <a href="/logout" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm flex-shrink-0">Logout</a> 
+            </div>
+        </header>
+        
+        <div class="page-content" id="dashboard"> <%- include('dashboard') %> </div> 
+        <div class="page-content hidden" id="input-kode-kas"> <%- include('partials/input_kode_kas_content') %> </div> 
+        <div class="page-content hidden" id="input-kode-biaya"> <%- include('partials/input_kode_biaya_content') %> </div> 
+        <div class="page-content hidden" id="input-kas"> <%- include('partials/input_kas_content') %> </div> 
+        <div class="page-content hidden" id="input-biaya"> <%- include('partials/input_biaya_content') %> </div> 
+        <div class="page-content hidden" id="tampil-kas"> <%- include('partials/tampil_kas_content') %> </div> 
+        <div class="page-content hidden" id="tampil-biaya"> <%- include('partials/tampil_biaya_content') %> </div> 
+        <div class="page-content hidden" id="buku-margin"> <%- include('partials/buku_margin_content') %> </div> 
+    </div> 
+    
+    <div id="notification-toast" class="toast hidden"> <span id="toast-icon"></span> <p id="toast-message"></p> </div>
+  
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script type="module" src="/js/app.js"></script> 
+</body>
+</html>

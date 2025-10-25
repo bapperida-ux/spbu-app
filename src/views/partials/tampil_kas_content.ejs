@@ -1,0 +1,35 @@
+<header class="page-header report-header">
+    <h2>Laporan Kas</h2>
+    <div class="filter-container">
+        <label for="kas-start-date">Dari:</label>
+        <input type="date" id="kas-start-date">
+        <label for="kas-end-date">Sampai:</label>
+        <input type="date" id="kas-end-date">
+        <button id="kas-filter-btn" class="btn btn-filter">Terapkan</button>
+        <button id="kas-export-btn" class="btn btn-export"> <i class="ri-file-excel-2-line"></i> Ekspor</button>
+    </div>
+</header>
+<div class="table-container card">
+    <table id="tabel-laporan-kas">
+        <thead>
+            <tr>
+                <th>Tanggal</th>
+                <th>Kode</th>
+                <th>Uraian</th>
+                <th>Uang Masuk (Rp)</th>
+                <th>Uang Keluar (Rp)</th>
+                <th>Sisa Saldo (Rp)</th>
+                <th>Keterangan</th>
+            </tr>
+        </thead>
+        <tbody id="tabel-laporan-kas-body"></tbody>
+        <tfoot id="tabel-laporan-kas-foot">
+            <tr>
+                <td colspan="3" style="text-align: right; font-weight: bold;">TOTAL</td>
+                <td id="kas-total-masuk" class="text-right text-success">Rp 0</td>
+                <td id="kas-total-keluar" class="text-right text-danger">Rp 0</td>
+                <td colspan="2"></td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
